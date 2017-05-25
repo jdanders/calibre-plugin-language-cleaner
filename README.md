@@ -5,13 +5,15 @@ I wrote this plugin because I don't like reading vulgar language, but I like rea
 
 If you'd like to customize it to meet your preferences, you just need to go through the lines of cleaner.py and add or remove filters as needed. You'll probably need a pretty good mastery of regular expressions to write new ones unless there is a similar one existing already that you can tweak.
 
-== LIMITATIONS ==
+## LIMITATIONS
 
 I am no expert at calibre, and I could not drum up much help on the support forums, so the integration is pretty weak. It only works on books that are being converted from epub, and only works during the conversion process.
 
 To install:
 * create a zip file with the three files: `cleaner.py`, `__init__.py`, and `plugin-import-name-language_clean_plugin.txt` called `Language_Cleaner.zip`. This command may help in Linux.
+
 `zip Language_Cleaner cleaner.py __init__.py plugin-import-name-language_clean_plugin.txt`
+
 * In calibre choose Preference -> Plugins -> Load plugin from file
 * Choose the zip you just created, and the plugin should show up under "File type plugins"
 
