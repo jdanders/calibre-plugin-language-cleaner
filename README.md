@@ -1,5 +1,5 @@
 # calibre-plugin-language-cleaner
-Length list of regexes to "clean up" language in books.
+Lengthy list of regexes to "clean up" language in books.
 
 I wrote this plugin because I don't like reading vulgar language, but I like reading books with vulgar language in it :). Personally I find books much more enjoyable after being processed with this script. Obviously it is a personal set of filters, but I've done my best to make the changes sound as natural as possible, and after using it for years, I think it's pretty good.
 
