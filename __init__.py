@@ -24,7 +24,7 @@ class CleanerPlugin(FileTypePlugin):
 
     name = 'Language Cleaner'  # Name of the plugin
     description = ('Replace naughty or offensive language with something more '
-                   'acceptable (to me at least), recovered version')
+                   'acceptable (to me at least)')
     # Platforms this plugin will run on
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'  # The author of this plugin
