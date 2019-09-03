@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 import os,sys,re
-#text = open('bad.txt').read()
 
 #Substitute requested word matching case of matched word
 def keep_case(sub,matchobj):
@@ -135,7 +134,7 @@ vain_lord_list=[
   #(re.compile(r'(?<![Oo][Ff] )\bG[Oo][Dd]\b(?! ([Bb][Ll][Ee][Ss][Ss]|[Ss][Aa][Vv][Ee]))'),"goodness",keep_case),
   ]
 
-  
+
 # 3 element list: [search phrase, replace value, preserve case function]
 re_list = [
   #########################################
@@ -369,9 +368,9 @@ re_list = [
   #some hell
   (re.compile(r'(?<=some\W)hell\b',re.I),'trouble',keep_case),
   #give/gave hell
-  (re.compile(r'(g[IiAa]ve\W.{0,7})hell\b(?!\Wof)',re.I),r'\1trouble',False),
+  (re.compile(r'(g[IiAa]ve.{0,7}\W)hell\b(?!\Wof)',re.I),r'\1trouble',False),
   #raise/raising hell
-  (re.compile(r'(rais[IiEe].{0,10})hell\b',re.I),r'\1trouble',False),
+  (re.compile(r'(rais[IiEe].{0,10}\W)hell\b',re.I),r'\1trouble',False),
   #chance in hell
   (re.compile(r'(?<=chance)( in) hell\b(\W*.)',re.I),'*removed*',drop_first_match),
   #burn in hell
@@ -390,12 +389,19 @@ re_list = [
   (re.compile(r'(?<=(..how|..for|where|.what|tever|..who)\Wthe\W)hell\b',re.I),'heck',keep_case),
   #sure/busy/etc. as hell
   (re.compile(r'(?<!known)( as) hell\b(\W*.)',re.I),'',drop_first_match),
+  #helluva
+  (re.compile(r'\bhelluva',re.I),'heck of a',keep_case),
   #way in hell
   (re.compile(r'(?<=way) (in) hell\b(\W*.)',re.I),'',drop_first_match),
   #what in hell
   (re.compile(r'(?<=what) (in) hell\b(\W*.)',re.I),'',drop_first_match),
   #but hell
   (re.compile(r'(?<=but )hell\b',re.I),'heck',keep_case),
+  #to be hell
+  (re.compile(r'(?<=to be )hell\b',re.I),'terrible',keep_case),
+  #is/it's hell
+  (re.compile(r'(?<=is )hell\b',re.I),'perdition',keep_case),
+  (re.compile(r'(?<=it[^\s]s )hell\b',re.U+re.I),'perdition',keep_case),
   #Aw, hell
   (re.compile(r'(?<=Aw, )hell\b',re.I),'heck',keep_case),
   #catch hell
@@ -405,6 +411,8 @@ re_list = [
   (re.compile(r'sure as hell[ \,]',re.I),'for sure',keep_case),
   (re.compile(r'ed as hell\b',re.I),'ed as could be',keep_case),
   (re.compile(r'\bas hell[ \,]',re.I),'as could be',keep_case),
+  #of hell
+  (re.compile(r'\bof hell\b',re.I),'of torture',keep_case),
   #all hell
   (re.compile(r'\ball hell\b',re.I),'all perdition',keep_case),
   #hell was
@@ -429,9 +437,11 @@ re_list = [
   #this/real hell (not followed by ?)
   (re.compile(r'(?<=(this|real)\W)hell(\W?hole|\W?pit)?(?!\?)',re.I),'pit',keep_case),
   #hell's
-  (re.compile(r'\thell[^\s]s',re.U+re.I),'perditions\'s',keep_case),
+  (re.compile(r'\bhell[^\s]s',re.U+re.I),'perditions\'s',keep_case),
   #interjection hell (preceeded by . or " or --, etc, followed by ,
   (re.compile(r'(?<=([\.?!,]\W\W|..\"|”|“|.\W\W))hell(?=[,!])',re.U+re.I),'heck',keep_case),
+  #>hell< shows up in html with italics or emphasis
+  (re.compile(r'\>hell\<',re.U+re.I),'>perdition<',keep_case),
 ]
 #+ ass_list + lord_list
 
@@ -457,23 +467,32 @@ def language_check(text):
       print "Looks like book calls donkeys asses"
   #open('/tmp/dump.txt','w').write(text)
   return ret_val
-    
+
 '''
-if DEBUG:
-  print text
-  print "-"*40
-  print "-"*40
+from functools import partial
+import codecs
+text = codecs.open('bad.txt', encoding='utf-8').read()
+
+#if DEBUG:
+#  print text
+#  print "-"*40
+#  print "-"*40
+
+output = ""
+replacement_list = language_check(text)
 
 output = ""
 for line in text.split("\n"):
-  for search,sub,pcase in re_list:
+  #Go through all elements of replacement_list
+  for search,sub,pcase in replacement_list:
     if pcase: # Preserve case
       line = search.sub(partial(pcase,sub),line)
     else: # Don't preserve case
       line = search.sub(sub,line)
   output += line + "\n"
 
-if DEBUG:
-  print output
+#if DEBUG:
+#  print output
+
+codecs.open('clensed.txt','w', encoding='utf-8').write(output)
 '''
-#open('clensed.txt','w').write(output)
