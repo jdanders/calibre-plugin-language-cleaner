@@ -43,6 +43,6 @@ This will convert and then load the books back on to the Kindle. It might take a
 I am no expert at calibre, and I could not drum up much help on the support forums, so the integration is pretty weak. It only works on books that are being converted from epub, and only works during the conversion process.
 
 Secret debug tip:
-If there is a "c:/Scratch/calibre" folder on your Winodws machine (change `logdir` in `__init__.py` if you want), the plugin will write before and after versions of the book as plain text files. Sometimes it does two copies and only one has useful changes. If you'd like to see how it was changed, compare the two files. I use [WinMerge](http://winmerge.org/) and that works well.
+If there is a "c:/Scratch/calibre" folder on your Windows machine or '/tmp/calibre' on Linux (change `logdir` in `__init__.py` if you want), the plugin will write before and after versions of the book as plain text files. Sometimes it does two copies and only one has useful changes. If you'd like to see how it was changed, compare the two files. I use [WinMerge](http://winmerge.org/) and that works well.
 
 By the way, there is a strong layer of irony here -- if vulgar language offends you, you'll probably want to avoid actually looking in the `cleaner.py` file, as it is chock full of it :)

@@ -12,13 +12,16 @@ from calibre_plugins.language_clean_plugin.cleaner import *
 from calibre.ebooks.tweak import *
 from optparse import OptionGroup, Option
 from calibre.customize import FileTypePlugin
-logdir = "c:/Scratch/calibre"
 __license__ = 'GPL v3'
 __copyright__ = '2012, Jordan Anderson'
 __docformat__ = 'restructuredtext en'
 
 #from __future__ import with_statement
 
+if os.name == 'nt':
+    logdir = "c:/Scratch/calibre"
+else:
+    logdir = "/tmp/calibre"
 
 class CleanerPlugin(FileTypePlugin):
 
@@ -28,7 +31,7 @@ class CleanerPlugin(FileTypePlugin):
     # Platforms this plugin will run on
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'  # The author of this plugin
-    version = (2019, 9, 2)   # The version number of this plugin
+    version = (2020, 9, 7)   # The version number of this plugin
     # The file types that this plugin will be applied to
     file_types = set(['epub'])
     on_preprocess = True  # Run this plugin after conversion is complete
