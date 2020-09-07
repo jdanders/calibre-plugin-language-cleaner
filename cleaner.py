@@ -36,7 +36,7 @@ def first_case(sub, matchobj):
                 if val[ii].isupper():
                     sub = sub[:ii] + sub[ii].upper() + sub[ii+1:]
         except:
-            print "*"*60, "sub=", sub, "val=", val, "*"*60
+            print("*"*60, "sub=", sub, "val=", val, "*"*60)
     return sub
 
 
@@ -54,11 +54,11 @@ def drop_first_match(sub, matchobj):
                             break
                 break
     except:
-        print "*"*50, "error in drop_first_match"
-        print drop
-        print val
-        print str(sub)
-        print str(matchobj.groups())
+        print("*"*50, "error in drop_first_match")
+        print(drop)
+        print(val)
+        print(str(sub))
+        print(str(matchobj.groups()))
     return val
 
 
@@ -138,7 +138,7 @@ lord_list = [
 # Use if this book is likely to take Lord's name in vain
 vain_lord_list = [
     (re.compile(r'thanked '+s_lord+r'\b', re.I), "thanked heaven", first_case),
-    (re.compile(r'(?<=([\.?!,]\W\W|..\"|”|“|.\W\W))'+s_lord +
+    (re.compile(r'(?<=([\.?!,]\W\W|..\"|..”|..“|.\W\W))'+s_lord +
                 's?(?=[\.,?!])', re.U+re.I), "goodness", keep_case),
     # Jesus and/or Christ
     (re.compile(r'(?<!of )\bjesus(\W?(christ|almighty))?', re.I), "goodness", first_case),
@@ -475,7 +475,7 @@ re_list = [
     # hell's
     (re.compile(r'\bhell[^\s]s', re.U+re.I), 'perditions\'s', keep_case),
     # interjection hell (preceeded by . or " or --, etc, followed by ,
-    (re.compile(r'(?<=([\.?!,]\W\W|..\"|”|“|.\W\W))hell(?=[,!])',
+    (re.compile(r'(?<=([\.?!,]\W\W|..\"|..”|..“|.\W\W))hell(?=[,!])',
                 re.U+re.I), 'heck', keep_case),
     # >hell< shows up in html with italics or emphasis
     (re.compile(r'\>hell\<', re.U+re.I), '>perdition<', keep_case),
@@ -490,20 +490,20 @@ def language_check(text):
     # Determine if this book is likely to take Lord's name in vain
     if re.search("(for Christ's sake!|Holy Christ!|Holy Jesus!|for God's sake!|God almighty!|goddamn|fuck)", text, re.I):
         if DEBUG:
-            print "Looks like book uses Lord's name in vain"
+            print("Looks like book uses Lord's name in vain")
         ret_val += vain_lord_list
     else:
         if DEBUG:
-            print "Looks like book does not use Lord's name in vain"
+            print("Looks like book does not use Lord's name in vain")
     # Ass has two very different contexts. Guess which to use.
     if re.search("(dumbass|asshole|smart ass|kick ass|ass kick|ass handed|badass|cover.{0,5}ass)", text):
         ret_val += dirty_a_list
         if DEBUG:
-            print "Looks like book does not need the donkey treatment"
+            print("Looks like book does not need the donkey treatment")
     else:
         ret_val += clean_a_list
         if DEBUG:
-            print "Looks like book calls donkeys asses"
+            print("Looks like book calls donkeys asses")
     # open('/tmp/dump.txt','w').write(text)
     return ret_val
 
@@ -514,9 +514,9 @@ import codecs
 text = codecs.open('bad.txt', encoding='utf-8').read()
 
 #if DEBUG:
-#    print text
-#    print "-"*40
-#    print "-"*40
+#    print(text)
+#    print("-"*40)
+#    print("-"*40)
 
 output = ""
 replacement_list = language_check(text)
@@ -532,7 +532,7 @@ for line in text.split("\n"):
     output += line + "\n"
 
 #if DEBUG:
-#    print output
+#    print(output)
 
 codecs.open('clensed.txt','w', encoding='utf-8').write(output)
 '''
