@@ -31,7 +31,7 @@ class CleanerPlugin(FileTypePlugin):
     # Platforms this plugin will run on
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'  # The author of this plugin
-    version = (2020, 9, 7)   # The version number of this plugin
+    version = (2023, 7, 8)   # The version number of this plugin
     # The file types that this plugin will be applied to
     file_types = set(['epub'])
     on_preprocess = True  # Run this plugin after conversion is complete

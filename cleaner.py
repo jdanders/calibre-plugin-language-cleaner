@@ -327,6 +327,8 @@ re_list = [
     (re.compile(r'zxsa[\W]?your', re.I), "bother your", first_case),
     # f you
     (re.compile(r'(?<!the[\W])zxsa[\W]?you', re.I), "forget you", first_case),
+    # the f
+    (re.compile(r'(?<=the[\W])zxsa\b', re.I), "heck", keep_case),
     # you f up/with
     (re.compile(r'(?<=you[\W])zxsa(?=[\W][UuWw])', re.I), "mess", first_case),
     # f's
@@ -353,8 +355,6 @@ re_list = [
     (re.compile(r'zxsaed', re.I), "messed", keep_case),
     # f the
     (re.compile(r'zxsa(?=[\W]the)', re.I), "forget", keep_case),
-    # the f
-    (re.compile(r'(?<=the[\W])zxsa\b', re.I), "heck", keep_case),
     # verb
     (re.compile(r'zxsa(?=\W(around|with|on\b|up\b|over|under|through))', re.I),
         "mess", first_case),
