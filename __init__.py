@@ -31,10 +31,10 @@ class CleanerPlugin(FileTypePlugin):
     # Platforms this plugin will run on
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'  # The author of this plugin
-    version = (2023, 7, 8)   # The version number of this plugin
+    version = (2024, 2, 29)   # The version number of this plugin
     # The file types that this plugin will be applied to
     file_types = set(['epub'])
-    on_preprocess = True  # Run this plugin after conversion is complete
+    on_preprocess = True  # Run this plugin before conversion is complete
     minimum_calibre_version = (0, 7, 53)
 
     def run(self, path_to_ebook):
@@ -47,7 +47,7 @@ class CleanerPlugin(FileTypePlugin):
         with TemporaryDirectory(tmppath) as tdir:
             #prints ("Relevant info:",tdir,fmt,ebook_file)
             try:
-                opf = exploder(ebook_file, tdir)
+                opf_path = exploder(ebook_file, tdir)
             except WorkerError as e:
                 prints('Failed to unpack', ebook_file)
                 prints(e.orig_tb)
@@ -56,12 +56,12 @@ class CleanerPlugin(FileTypePlugin):
                 prints(as_unicode(e), file=sys.stderr)
                 raise SystemExit(1)
             # Debug
-            print ("Created tdir:", tdir, "and found opf", opf)
+            #print ("Created tdir:", tdir, "and found opf", opf_path)
             #print (os.popen("ll "+tdir).read())
             #print ("OPF CONTENTS:")
-            #print (open(opf,'r').read())
+            #print (open(opf_path,'r').read())
             # manipulate all of the files
-            opf = open(opf, 'r').read().split('\n')
+            opf = open(opf_path, 'r').read().split('\n')
             # first, assemble the entire text to evaluate context
             text = ""
             for f in walk(tdir):
@@ -74,7 +74,7 @@ class CleanerPlugin(FileTypePlugin):
                     ftype = 'text'
                 if not ftype:
                     print('Non-text type %s for file %s' % (ftype, f))
-                elif opf_line and 'text' in ftype:
+                elif opf_line and ('text' in ftype or 'html' in ftype):
                     encodings = ['utf-8', 'windows-1252', 'windows-1250']
                     for e in encodings:
                         try:
@@ -93,7 +93,7 @@ class CleanerPlugin(FileTypePlugin):
                             os.path.basename(f).lower() in ii.lower()]
                 # Not sure what the correct way to determine which files should
                 # be edited. Seems like most are marked 'application/' in type
-                print ("File", f, "\nOPF line:\n", opf_line)
+                #print ("File", f, "\nOPF line:\n", opf_line)
                 ftype = mimetypes.guess_type(f)[0]
                 if not ftype and "html" in f.split('.')[-1]:
                     print('Non-text type %s for file %s but forcing text mode'
@@ -101,7 +101,7 @@ class CleanerPlugin(FileTypePlugin):
                     ftype = 'text'
                 if not ftype:
                     print('Non-text type %s for file %s' % (ftype, f))
-                elif opf_line and 'text' in ftype:
+                elif opf_line and ('text' in ftype or 'html' in ftype):
                     print ("Cleaning", f)
                     text = open(f, 'r').read()
                     output = ""
@@ -131,7 +131,6 @@ class CleanerPlugin(FileTypePlugin):
                 prints(e.orig_tb)
                 raise SystemExit(1)
             prints(ebook_file, 'successfully cleaned')
-
         #print (path_to_ebook,ext,str(mi))
         #print ("you are returning from Language Cleaner")
         return ebook_file
