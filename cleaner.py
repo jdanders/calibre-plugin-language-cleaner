@@ -93,13 +93,13 @@ clean_a_list = [
     # ass
     (re.compile(r'\ban Ass\b'), "a Donkey", False),  # C.S. Lewis
     (re.compile(r'\ban\Wass\b', re.I), "a donkey", keep_case),
-    (re.compile(r'(?<!in\W)\bass\b', re.I), "donkey", keep_case),
+    (re.compile(r'(?<!(in\W|..>))\bass\b', re.I), "donkey", keep_case),
 ]
 
 s_lord = '(god|jesus(\W?christ)?|christ)'
 lord_list = [
     # Thank God
-    (re.compile(r'thank( you\,?)? '+s_lord+r'\b', re.I), "thank goodness", first_case),
+    (re.compile(r'thank( you\,?)? '+s_lord+r'\b(?! of)', re.I), "thank goodness", first_case),
     # My God
     (re.compile(r'(?<!(..\bin|..\bis|..\bto|..\bof|from|..\bon)\W)my ' + \
                 s_lord+r's?\b(?! \w)', re.I), "my goodness", first_case),
@@ -112,14 +112,16 @@ lord_list = [
     # In God's name
     (re.compile(r'(?<=where\W)\bin\W'+s_lord + \
                 '\W*s name', re.U+re.I), "in the world", first_case),
-    (re.compile(r'\bin '+s_lord+'\W*s name', re.U+re.I),
+    (re.compile(r'(?<=what\W)\bin\W'+s_lord + \
+                '\W*s name', re.U+re.I), "in the world", first_case),
+    (re.compile(r'\bin\W'+s_lord+'\W*s name', re.U+re.I),
         "for goodness sake", first_case),
     # in God
     (re.compile(r'\bin '+s_lord+r'\b', re.I), "in the lord", first_case),
     # of God
     #(re.compile(r'(?<!(.church|society|...time) )of '+s_lord+r'\b',re.I),"of heaven",first_case),
     # to God
-    (re.compile(r'\bto '+s_lord+r'\b', re.I), "to heaven", first_case),
+    (re.compile(r'\bto '+s_lord+r'\b( [Hh]imself)?', re.I), "to heaven", first_case),
     # by God
     (re.compile(r'\bby '+s_lord+r'\b', re.I), "by the heavens", first_case),
     # God knows (start of sentence, not start of sentence)
@@ -387,7 +389,7 @@ re_list = [
     # hell-word (not helldiver bird)
     (re.compile(r'\bhell(?=-[^oO])(?!-diver)', re.I), 'demon', keep_case),
     # hell's bells
-    (re.compile(r'\bhell.{0,4}s?\W?bells?', re.I), 'by golly', keep_case),
+    (re.compile(r'\bhell[^o]{0,4}s?\W?bells?', re.I), 'by golly', keep_case),
     # hell with
     (re.compile(r'(to|the)\Whell\Wwith', re.I), 'forget', keep_case),
     (re.compile(r'\bhell(?=\Wwith)', re.I), 'heck', keep_case),
@@ -473,7 +475,7 @@ re_list = [
     # this/real hell (not followed by ?)
     (re.compile(r'(?<=(this|real)\W)hell(\W?hole|\W?pit)?(?!\?)', re.I), 'pit', keep_case),
     # hell's
-    (re.compile(r'\bhell[^\s]s', re.U+re.I), 'perditions\'s', keep_case),
+    (re.compile(r'\bhell\Ws', re.U+re.I), 'perditions\'s', keep_case),
     # interjection hell (preceeded by . or " or --, etc, followed by ,
     (re.compile(r'(?<=([\.?!,]\W\W|..\"|..”|..“|.\W\W))hell(?=[,!])',
                 re.U+re.I), 'heck', keep_case),
