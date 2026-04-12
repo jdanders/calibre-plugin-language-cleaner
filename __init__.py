@@ -34,6 +34,7 @@ class CleanerPlugin(FileTypePlugin):
     version = (2024, 2, 29)   # The version number of this plugin
     # The file types that this plugin will be applied to
     file_types = set(['epub'])
+    on_import = True  # Run this plugin when adding books to the library
     on_preprocess = True  # Run this plugin before conversion is complete
     minimum_calibre_version = (0, 7, 53)
 
@@ -61,8 +62,9 @@ class CleanerPlugin(FileTypePlugin):
             #print ("OPF CONTENTS:")
             #print (open(opf_path,'r').read())
             # manipulate all of the files
-            opf = open(opf_path, 'r').read().split('\n')
+            opf = open(opf_path, 'r', encoding='utf-8').read().split('\n')
             # first, assemble the entire text to evaluate context
+            encodings = ['utf-8', 'windows-1252', 'windows-1250']
             text = ""
             for f in walk(tdir):
                 opf_line = [ii for ii in opf if
@@ -75,7 +77,6 @@ class CleanerPlugin(FileTypePlugin):
                 if not ftype:
                     print('Non-text type %s for file %s' % (ftype, f))
                 elif opf_line and ('text' in ftype or 'html' in ftype):
-                    encodings = ['utf-8', 'windows-1252', 'windows-1250']
                     for e in encodings:
                         try:
                             text += codecs.open(f, 'r', encoding=e).read()
@@ -103,7 +104,15 @@ class CleanerPlugin(FileTypePlugin):
                     print('Non-text type %s for file %s' % (ftype, f))
                 elif opf_line and ('text' in ftype or 'html' in ftype):
                     print ("Cleaning", f)
-                    text = open(f, 'r').read()
+                    file_encoding = 'utf-8'
+                    for e in encodings:
+                        try:
+                            text = codecs.open(f, 'r', encoding=e).read()
+                        except UnicodeDecodeError:
+                            continue
+                        else:
+                            file_encoding = e
+                            break
                     output = ""
                     for line in text.split("\n"):
                         # Go through all elements of replacement_list
@@ -113,7 +122,7 @@ class CleanerPlugin(FileTypePlugin):
                             else:  # Don't preserve case
                                 line = search.sub(sub, line)
                         output += line + "\n"
-                    open(f, 'w').write(output)
+                    codecs.open(f, 'w', encoding=file_encoding).write(output)
                     end_text += output
             if start_text.replace('\n', "") == end_text.replace('\n', ''):
                 print ("Language cleaner made no changes")
