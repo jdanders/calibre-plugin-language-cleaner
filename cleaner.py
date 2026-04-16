@@ -5,9 +5,9 @@ import sys
 import re
 
 
-def keep_case(sub, matchobj):
+def keep_case(sub, matchobj, group=0):
     ''' Substitute requested word matching case of matched word '''
-    val = matchobj.group(0)
+    val = matchobj.group(group)
     up_count = 0
     if val.isupper():
         sub = sub.upper()
@@ -25,9 +25,9 @@ def keep_case(sub, matchobj):
     return sub
 
 
-def first_case(sub, matchobj):
+def first_case(sub, matchobj, group=0):
     ''' Keep the case of the first lettter '''
-    val = matchobj.group(0)
+    val = matchobj.group(group)
     if val.isupper():
         sub = sub.upper()
     else:
@@ -68,7 +68,7 @@ dirty_a_list = [
     # dirtier ass
     #########################################
     # haul ass
-    (re.compile(r'\b(move|haul)\Wass\b', re.I), "move fast", keep_case),
+    (re.compile(r'\b(move|haul|get|drag)\Wass\b', re.I), "move fast", keep_case),
     # little ass
     (re.compile(r'little\W?ass\b', re.I), "little donkey", keep_case),
     (re.compile(r'little\W?asses\b', re.I), "little donkeys", keep_case),
@@ -87,7 +87,7 @@ clean_a_list = [
     # cleaner ass
     #########################################
     # haul ass
-    (re.compile(r'\bhaul\Wass\b', re.I), "move fast", keep_case),
+    (re.compile(r'\b(move|haul|get|drag)\Wass\b', re.I), "move fast", keep_case),
     # asses
     (re.compile(r'\basses\b', re.I), "donkeys", keep_case),
     # ass
@@ -96,7 +96,7 @@ clean_a_list = [
     (re.compile(r'(?<!(in\W|..>))\bass\b', re.I), "donkey", keep_case),
 ]
 
-s_lord = '(god|jesus(\W?christ)?|christ)'
+s_lord = r'(god|jesus(\W?christ)?|christ)'
 lord_list = [
     # Thank God
     (re.compile(r'thank( you\,?)? '+s_lord+r'\b(?! of)', re.I), "thank goodness", first_case),
@@ -110,11 +110,9 @@ lord_list = [
     # name of God
     (re.compile(r'\bname of '+s_lord+r'\b', re.I), "world", first_case),
     # In God's name
-    (re.compile(r'(?<=where\W)\bin\W'+s_lord + \
-                '\W*s name', re.U+re.I), "in the world", first_case),
-    (re.compile(r'(?<=what\W)\bin\W'+s_lord + \
-                '\W*s name', re.U+re.I), "in the world", first_case),
-    (re.compile(r'\bin\W'+s_lord+'\W*s name', re.U+re.I),
+    (re.compile(r'\b(where|what|how|why|when)(\W+)(in\W' + s_lord + r'\W*s name)', re.U+re.I),
+        lambda m: m.group(1) + m.group(2) + first_case("in the world", m, group=3), False),
+    (re.compile(r'\bin\W'+s_lord+r'\W*s name', re.U+re.I),
         "for goodness sake", first_case),
     # in God
     (re.compile(r'\bin '+s_lord+r'\b', re.I), "in the lord", first_case),
@@ -125,23 +123,23 @@ lord_list = [
     # by God
     (re.compile(r'\bby '+s_lord+r'\b', re.I), "by the heavens", first_case),
     # God knows (start of sentence, not start of sentence)
-    (re.compile(r'([^ ]|\. +)'+s_lord+' knows', re.I),
+    (re.compile(r'([^ ]|\. +)'+s_lord+r' knows', re.I),
      r"\1Heaven knows", False),
-    (re.compile(r''+s_lord+' knows', re.I), "heaven knows", False),
+    (re.compile(r''+s_lord+r' knows', re.I), "heaven knows", False),
     # For God's sake
-    (re.compile(r'\bfor '+s_lord+'\W*s sake', re.U+re.I),
+    (re.compile(r'\bfor '+s_lord+r'\W*s sake', re.U+re.I),
         "for goodness sake", first_case),
     # Godforsaken
-    (re.compile(r'\b'+s_lord+'.?forsaken\b', re.I), "forsaken", keep_case),
+    (re.compile(r'\b'+s_lord+r'.?forsaken\b', re.I), "forsaken", False),
     # Godawful
-    (re.compile(r'\b'+s_lord+'.?awful\b', re.I), "forsaken", keep_case),
+    (re.compile(r'\b'+s_lord+r'.?awful\b', re.I), "forsaken", keep_case),
 ]
 
 # Use if this book is likely to take Lord's name in vain
 vain_lord_list = [
     (re.compile(r'thanked '+s_lord+r'\b', re.I), "thanked heaven", first_case),
     (re.compile(r'(?<=([\.?!,]\W\W|..\"|..”|..“|.\W\W))'+s_lord +
-                's?(?=[\.,?!])', re.U+re.I), "goodness", keep_case),
+                r's?(?=[\.,?!])', re.U+re.I), "goodness", keep_case),
     # Jesus and/or Christ
     (re.compile(r'(?<!of )\bjesus(\W?(christ|almighty))?', re.I), "goodness", first_case),
     (re.compile(r'(?<!of )(?<!jesus )christ\b', re.I), "goodness", keep_case),
@@ -240,10 +238,10 @@ re_list = [
                 re.I), 'darn', keep_case),
     # damned good, damn sure, etc (Clancy's favorites)
     (re.compile(r'\b((?:gods? *)?damn(?:ed))(?:\W+)(sure|near|sight|good|much|hard|easy|big|little|glad|clever|mess|smart|fine|fool|right|thing|much|shame|nice|mean|bad|lucky|late|important)', re.I), '', drop_first_match),
-    (re.compile(r'\b((?:gods? *)?damn(?:ed))(?:\W+)well', re.I), 'darn well', keep_case),
+    (re.compile(r'\b((?:gods? *)?damn(?:ed)?)(?:\W+)well', re.I), 'darn well', keep_case),
     # Religious damning
-    (re.compile(r'\b(?:gods? *)?damned', re.I), 'cursed', keep_case),
-    (re.compile(r'\b(?:gods? *)?damndest', re.I), 'very best', keep_case),
+    (re.compile(r'\b(?:gods? *)?damned\b', re.I), 'cursed', keep_case),
+    (re.compile(r'\b(?:gods? *)?damnedest', re.I), 'very best', keep_case),
     (re.compile(r'\b(?:gods? *)?damning', re.I), 'condemning', keep_case),
     (re.compile(r'\b(?:gods? *)?damnable', re.I), 'condemning', keep_case),
     (re.compile(r'\b(?:gods? *)?damnably', re.I), 'cursedly', keep_case),
@@ -326,7 +324,7 @@ re_list = [
     # cluster f
     (re.compile(r'cluster[\W]?zxsa', re.I), "massive failure", first_case),
     # f your
-    (re.compile(r'zxsa[\W]?your', re.I), "bother your", first_case),
+    (re.compile(r'zxsa[\W]?your', re.I), "harass your", first_case),
     # f you
     (re.compile(r'(?<!the[\W])zxsa[\W]?you', re.I), "forget you", first_case),
     # the f
@@ -350,13 +348,13 @@ re_list = [
     (re.compile(r'zxsaer', re.I), "idiot", keep_case),
     # f'it
     (re.compile(r'zxsa\W?it', re.I), "phoo", keep_case),
-    # f your/his/her/etc
-    (re.compile(
-        r'zxsa(?=(ed)?\W(your|our|her|his|us|this|that|the\b|their|those|these|them|[^\s]em|for|a\b))', re.U+re.I), "harass", keep_case),
-    # f'ed
-    (re.compile(r'zxsaed', re.I), "messed", keep_case),
     # f the
     (re.compile(r'zxsa(?=[\W]the)', re.I), "forget", keep_case),
+    # f our/his/her/etc
+    (re.compile(
+        r'zxsa(?=(ed)?\W(our|her|his|us|this|that|their|those|these|them|[^\s]em|for|a\b))', re.U+re.I), "harass", keep_case),
+    # f'ed
+    (re.compile(r'zxsaed', re.I), "messed", keep_case),
     # verb
     (re.compile(r'zxsa(?=\W(around|with|on\b|up\b|over|under|through))', re.I),
         "mess", first_case),
@@ -411,7 +409,7 @@ re_list = [
     # living hell
     (re.compile(r'(?<=living\W)hell\b', re.I), 'prison', keep_case),
     # for/etc the hell
-    (re.compile(r'(?<=(..for)\Wthe\W)hell\b', re.I), 'heck', keep_case),
+    (re.compile(r'(?<=\bfor\Wthe\W)hell\b', re.I), 'heck', keep_case),
     # what the hell[.?!]
     (re.compile(r'what\Wthe\Whell(?=[\.?!\,])',
                 re.I), 'what the heck', keep_case),
@@ -422,8 +420,8 @@ re_list = [
                 re.I), '*removed*', drop_first_match),
     #(re.compile(r'(?:\Win)?\W(the)\Whell\b(?=[ \.?!\,])(?! in)(\W*.)',re.I),'*removed*',drop_first_match),
     # what/how/whatever/etc the hell
-    (re.compile(r'(?<=(..how|..for|where|.what|tever|..who)\Wthe\W)hell\b',
-                re.I), 'heck', keep_case),
+    (re.compile(r'(?i)\b(how|for|where|what|whatever|who|why|when)(\Wthe\W)(hell)\b'),
+                lambda m: m.group(1) + m.group(2) + keep_case('heck', m, group=3), False),
     # sure/busy/etc. as hell
     (re.compile(r'(?<!known)( as) hell\b(\W*.)', re.I), '', drop_first_match),
     # helluva
@@ -437,8 +435,8 @@ re_list = [
     # to be hell
     (re.compile(r'(?<=to be )hell\b', re.I), 'terrible', keep_case),
     # is/it's hell
-    (re.compile(r'(?<=is )hell\b', re.I), 'perdition', keep_case),
-    (re.compile(r'(?<=it[^\s]s )hell\b', re.U+re.I), 'perdition', keep_case),
+    (re.compile(r'(?<=\bis )hell\b', re.I), 'perdition', keep_case),
+    (re.compile(r'(?<=\bit[^\s]s )hell\b', re.U+re.I), 'perdition', keep_case),
     #Aw, hell
     (re.compile(r'(?<=Aw, )hell\b', re.I), 'heck', keep_case),
     # catch hell
@@ -490,7 +488,7 @@ DEBUG = True
 def language_check(text):
     ret_val = re_list + lord_list
     # Determine if this book is likely to take Lord's name in vain
-    if re.search("(for Christ's sake!|Holy Christ!|Holy Jesus!|for God's sake!|God almighty!|goddamn|fuck)", text, re.I):
+    if re.search(r"(for Christ's sake!|Holy Christ!|Holy Jesus!|for God's sake!|God almighty!|goddamn|fuck)", text, re.I):
         if DEBUG:
             print("Looks like book uses Lord's name in vain")
         ret_val += vain_lord_list
@@ -498,7 +496,7 @@ def language_check(text):
         if DEBUG:
             print("Looks like book does not use Lord's name in vain")
     # Ass has two very different contexts. Guess which to use.
-    if re.search("(dumbass|asshole|smart ass|kick ass|ass kick|ass handed|badass|cover.{0,5}ass)", text):
+    if re.search(r"(dumbass|asshole|smart ass|kick ass|ass kick|ass handed|badass|cover.{0,5}ass)", text):
         ret_val += dirty_a_list
         if DEBUG:
             print("Looks like book does not need the donkey treatment")
