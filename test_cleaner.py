@@ -18,10 +18,10 @@ class TestCleanerRegex(unittest.TestCase):
         """
         test_cases: list of (input_text, expected_output)
         """
+        from cleaner import RuleEngine
+        engine = RuleEngine(regex_list)
         for input_text, expected_output in test_cases:
-            actual_output = input_text
-            for pattern, sub, pcase in regex_list:
-                actual_output = self.run_sub(pattern, sub, pcase, actual_output)
+            actual_output = engine.process_text(input_text)
             if actual_output != expected_output:
                 self.fail(f"Got '{actual_output}' but expected '{expected_output}'")
 
@@ -489,6 +489,12 @@ class TestCleanerRegex(unittest.TestCase):
             ("THANK GOD", "THANK GOODNESS"),
         ]
         self.check_list(lord_list, cases)
+
+    def test_clean_text_integrated(self):
+        from cleaner import clean_text
+        text = "This is a damn nuisance."
+        expected = "This is a blasted nuisance."
+        self.assertEqual(clean_text(text), expected)
 
     def test_exceptions(self):
         # Trigger first_case exception

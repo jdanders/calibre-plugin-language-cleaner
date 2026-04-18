@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+from functools import partial
 
 
 def keep_case(sub, matchobj, group=0):
@@ -480,7 +481,57 @@ re_list = [
     # >hell< shows up in html with italics or emphasis
     (re.compile(r'\>hell\<', re.U+re.I), '>perdition<', keep_case),
 ]
-#+ ass_list + lord_list
+
+
+class RuleEngine:
+    def __init__(self, rules):
+        self.rules = rules
+        # Keywords that should trigger an "early exit" optimization if none are present in a line.
+        # This preserves the exact sequential regex behavior while skipping clean lines.
+        keywords = set()
+        for pattern, _, _ in rules:
+            # We want to extract literal words. Regex patterns often have backslashes.
+            # We replace \b with a space to avoid 'bslut' type extractions.
+            clean_pattern = pattern.pattern.replace('\\b', ' ').replace('\\W', ' ')
+            words = re.findall(r'[a-zA-Z]+', clean_pattern)
+            for w in words:
+                if len(w) >= 2:
+                    keywords.add(w.lower())
+        
+        # Ensure cascading keywords are included
+        if 'zxsa' in keywords:
+            keywords.add('fuck')
+            keywords.add('fook')
+
+        if keywords:
+            # Sort by length descending to help the regex engine
+            pattern = '(?:' + '|'.join(sorted((re.escape(k) for k in keywords), key=len, reverse=True)) + ')'
+            self.keywords_re = re.compile(pattern, re.I)
+        else:
+            self.keywords_re = None
+
+    def process_line(self, line):
+        # Optimization: If no keyword is present, skip all regexes.
+        if self.keywords_re and not self.keywords_re.search(line):
+            return line
+
+        # Maintain exact parity by running all rules in sequence.
+        for pattern, sub, pcase in self.rules:
+            if pcase:
+                line = pattern.sub(partial(pcase, sub), line)
+            else:
+                line = pattern.sub(sub, line)
+        return line
+
+    def process_text(self, text):
+        return "\n".join(self.process_line(line) for line in text.split("\n"))
+
+
+def clean_text(text):
+    replacement_list = language_check(text)
+    engine = RuleEngine(replacement_list)
+    return engine.process_text(text)
+
 
 DEBUG = True
 
@@ -506,33 +557,3 @@ def language_check(text):
             print("Looks like book calls donkeys asses")
     # open('/tmp/dump.txt','w').write(text)
     return ret_val
-
-
-'''
-from functools import partial
-import codecs
-text = codecs.open('bad.txt', encoding='utf-8').read()
-
-#if DEBUG:
-#    print(text)
-#    print("-"*40)
-#    print("-"*40)
-
-output = ""
-replacement_list = language_check(text)
-
-output = ""
-for line in text.split("\n"):
-    #Go through all elements of replacement_list
-    for search,sub,pcase in replacement_list:
-        if pcase: # Preserve case
-            line = search.sub(partial(pcase,sub),line)
-        else: # Don't preserve case
-            line = search.sub(sub,line)
-    output += line + "\n"
-
-#if DEBUG:
-#    print(output)
-
-codecs.open('clensed.txt','w', encoding='utf-8').write(output)
-'''
