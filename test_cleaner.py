@@ -1,5 +1,7 @@
 import unittest
 import re
+import difflib
+import os
 from functools import partial
 from cleaner import (
     keep_case, first_case, drop_first_match,
@@ -23,7 +25,7 @@ class TestCleanerRegex(unittest.TestCase):
         for input_text, expected_output in test_cases:
             actual_output = engine.process_text(input_text)
             if actual_output != expected_output:
-                self.fail(f"Got '{actual_output}' but expected '{expected_output}'")
+                self.fail(f"Input '{input_text}': Got '{actual_output}' but expected '{expected_output}'")
 
     def test_keep_case(self):
         # Test keep_case function directly
@@ -37,13 +39,17 @@ class TestCleanerRegex(unittest.TestCase):
     def test_dirty_a_list(self):
         cases = [
             ("Move ass!", "Move fast!"),
+            ("Move arse!", "Move fast!"),
             ("HAUL ASS", "MOVE FAST"),
-            ("haul ass", "move fast"),
+            ("haul arse", "move fast"),
             ("GET ASS", "MOVE FAST"),
             ("drag ass", "move fast"),
             ("little ass", "little donkey"),
+            ("little-ass", "little donkey"),  # \W? matches -
+            ("little arse", "little donkey"),
             ("little asses", "little donkeys"),
             ("your ass", "your rear"),
+            ("your arse", "your rear"),
             ("own ass", "own rear"),
             ("my ass", "my rear"),
             ("our ass", "our rear"),
@@ -72,14 +78,17 @@ class TestCleanerRegex(unittest.TestCase):
             ("its asses", "its rears"),
             ("for asses", "for rears"),
             ("an ass", "a jerk"),
+            ("an arse", "a jerk"),
             ("Asses", "Rears"),
             ("ass", "rear"),
+            ("arse", "rear"),
         ]
         self.check_list(dirty_a_list, cases)
 
     def test_clean_a_list(self):
         cases = [
             ("move ass", "move fast"),
+            ("move arse", "move fast"),
             ("haul ass", "move fast"),
             ("get ass", "move fast"),
             ("drag ass", "move fast"),
@@ -87,8 +96,11 @@ class TestCleanerRegex(unittest.TestCase):
             ("asses", "donkeys"),
             ("an Ass", "a Donkey"),
             ("an ass", "a donkey"),
+            ("an arse", "a donkey"),
             ("ass", "donkey"),
+            ("arse", "donkey"),
             ("in ass", "in ass"),
+            ("<b>ass</b>", "<b>ass</b>"),
         ]
         self.check_list(clean_a_list, cases)
 
@@ -96,8 +108,10 @@ class TestCleanerRegex(unittest.TestCase):
     def test_lord_list(self):
         cases = [
             ("Thank God", "Thank goodness"),
+            ("thank you God", "thank goodness"),
             ("Thank Jesus", "Thank goodness"),
             ("Thank Jesus Christ", "Thank goodness"),
+            ("Thank God of Israel", "Thank God of Israel"),
             ("Thank Christ", "Thank goodness"),
             ("thank you, God", "thank goodness"),
             ("thank you, Jesus", "thank goodness"),
@@ -107,7 +121,9 @@ class TestCleanerRegex(unittest.TestCase):
             ("My Jesus!", "My goodness!"),
             ("My Jesus Christ!", "My goodness!"),
             ("My Christ!", "My goodness!"),
+            ("my God's", "my goodness's"),  # s is captured by s? in My God rule
             ("Oh, God", "Oh goodness"),
+            ("oh God", "oh goodness"),
             ("Oh, Jesus", "Oh goodness"),
             ("Oh, Jesus Christ", "Oh goodness"),
             ("Oh, Christ", "Oh goodness"),
@@ -177,6 +193,8 @@ class TestCleanerRegex(unittest.TestCase):
             (".  Jesus-Christ", ".  Goodness"),
             (".  Jesus Almighty", ".  Goodness"),
             (".  Christ", ".  Goodness"),
+            ("Jesus!", "Goodness!"),
+            ("Christ", "Goodness"),
         ]
         self.check_list(vain_lord_list, cases)
 
@@ -185,15 +203,22 @@ class TestCleanerRegex(unittest.TestCase):
             ("tits", "belly"),
             ("TITS", "BELLY"),
             ("tit for tat", "tit for tat"),
-            ("slut", "hussy"),
-            ("sluts", "hussies"),
+            ("tit-tat-toe", "tit-tat-toe"),
+            ("titular", "titular"),
+            ("slut", "trollop"),
+            ("sluts", "trollops"),
+            ("sheeny", "man"),
+            ("nigger", "black"),
             ("topless bar", "bar"),
+            ("topless-bar", "bar"),
+            ("blasted zxsain windpipe", "blasted windpipe"),
         ])
 
     def test_re_list_whorehouse_crap(self):
         self.check_list(re_list, [
             ("whorehouse", "brothel"),
             ("take a crap", "use the toilet"),
+            ("take-a-crap", "use the toilet"),
             ("take a crapper", "use the toilet"),
             ("crapper", "toilet"),
             ("crap", "garbage"),
@@ -203,9 +228,11 @@ class TestCleanerRegex(unittest.TestCase):
     def test_re_list_cock_cunt_damn(self):
         self.check_list(re_list, [
             ("cock-up", "mess up"),
+            ("cockup", "mess up"),
             ("cocksucker", "sucker"),
             ("cocker", "idiot"),
             ("cocker spaniel", "cocker spaniel"),
+            ("cocker-spaniel", "cocker-spaniel"),
             ("cunt", "groin"),
             ("Goddammit", "Dang it"),
             ("dammit", "dang it"),
@@ -215,15 +242,26 @@ class TestCleanerRegex(unittest.TestCase):
         self.check_list(re_list, [
             ("smart ass", "smart aleck"),
             ("smart-ass", "smart aleck"),
+            ("smart arse", "smart aleck"),
             ("kissing ass", "kissing up"),
+            ("kissing arse", "kissing up"),
+            ("kissin' ass", "kissing up"),
             ("kiss my ass", "fly a kite"),
+            ("kiss my arse", "fly a kite"),
+            ("kiss your arse", "fly a kite"),
+            ("kiss my royal Irish arse", "fly a kite"),
+            ("arse", "rear"),
             ("kick ass", "kick booty"),
+            ("kick arse", "kick booty"),
             ("cover your ass", "cover your rear"),
+            ("cover his arse", "cover his rear"),
             ("kick his ass", "kick his rear"),
             ("jackass", "jerk"),
             ("bray like a jackass", "bray like a donkey"),
             ("asshole", "jerk"),
+            ("an-asshole", "a jerk"),
             ("horse's ass", "jerk"),
+            ("horse's arse", "jerk"),
         ])
 
     def test_re_list_damn_varieties(self):
@@ -237,26 +275,32 @@ class TestCleanerRegex(unittest.TestCase):
         clancy_cases += [("damn near", "nearly")]
 
         # Lookbehind variations
-        lookbehind_words = ["your", "our", "her", "his", "this", "that", "the", "their", "hose", "these", "for", "so", "some", "one", "one more", "too"]
+        lookbehind_words = ["your", "our", "her", "his", "this", "that", "the", "their", "those", "these", "for", "so", "some", "one", "one more", "too"]
         lookbehind_cases = [(f"{word} damn", f"{word}") for word in lookbehind_words]
         lookbehind_cases += [(f"{word} damned", f"{word}") for word in lookbehind_words]
 
         cases = [
             ("be damned", "be darned"),
             ("be goddamned", "be darned"),
+            ("be gods-damned", "be darned"),
             ("be gods damned", "be darned"),
             ("give a damn", "care"),
+            ("give him a damn", "care"),
             ("gives a damn", "cares"),
             ("give a god damn", "care"),
             ("damn near", "nearly"),
             ("god damn near", "nearly"),
+            ("gods damn near", "nearly"),
             ("worth a damn", "worth a cent"),
             ("worth a god damn", "worth a cent"),
+            ("the damned", "the"),
             ("of the damned", "of the cursed"),
             ("of the god damned", "of the cursed"),
-            ("a damn", "a blasted"),
-            ("a god damn", "a blasted"),
+            ("a damn nuisance", "a blasted nuisance"),
+            ("a damn", "a cent"),
+            ("a god damn", "a cent"),
             ("damn sure", "dang sure"),
+
             ("damned well", "darn well"),
             ("damn well", "darn well"),
             ("god damned well", "darn well"),
@@ -286,12 +330,15 @@ class TestCleanerRegex(unittest.TestCase):
             ("damn the", "curse the"),
             ("damn", "dang"),
             ("god damn", "dang"),
+            ("gods damn", "dang"),
         ] + clancy_cases + lookbehind_cases
         self.check_list(re_list, cases)
 
     def test_re_list_bitch_shit(self):
         cases = [
             ("son of a bitch", "jerk"),
+            ("sun of a bitch", "jerk"),
+            ("son ov a bitch", "jerk"),
             ("son of bitch", "jerk"),
             ("sons-of-bitches", "jerks"),
             ("bitchin'", "complaining"),
@@ -302,6 +349,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("bitch", "jerk"),
             ("bitches", "jerks"),
             ("bullshit", "rubbish"),
+            ("bull.shit", "rubbish"),
             ("horseshit", "rubbish"),
             ("dogshit", "rubbish"),
             ("jackshit", "rubbish"),
@@ -331,6 +379,8 @@ class TestCleanerRegex(unittest.TestCase):
             ("got shit", "got nothing"),
             ("some shit", "some trash"),
             ("Shit!", "Shoot!"),
+            ("shite", "rubbish"),
+            ("give a shite", "give a hoot"),
             ("shit", "rubbish"),
         ]
         self.check_list(re_list, cases)
@@ -339,6 +389,7 @@ class TestCleanerRegex(unittest.TestCase):
         cases = [
             ("fuck", "idiot"), # Rule: fuck -> zxsa -> idiot
             ("motherfuck", "idiot"), # Rule: motherfuck -> zxsa -> idiot
+            ("mother-fuck", "idiot"),
             ("muthafuck", "idiot"),
             ("fook", "idiot"),
             ("motherfook", "idiot"),
@@ -362,17 +413,19 @@ class TestCleanerRegex(unittest.TestCase):
             ("zxsain' around", "messin' around"),
             ("zxsas around", "messes around"),
             ("zxsain a", "unbelievable"),
-            (" zxsain well x", " x"),
-            ("zxsain well x", " x"),
+            (" zxsain well ", " "),
+            (" zxsain well,", ","),
             ("zxsain", "frigging"),
             ("zxsaer", "idiot"),
             ("zxsa it", "phoo"),
             ("zxsa-it", "phoo"),
+            ("zxsa it all", "phoo"),
             ("zxsaed", "messed"),
             ("zxsa the", "forget the"),
             ("zxsa our", "harass our"),
             ("zxsa her", "harass her"),
             ("zxsa his", "harass his"),
+            ("zxsa old", "curse old"),
             ("zxsa us", "harass us"),
             ("zxsa this", "harass this"),
             ("zxsa that", "harass that"),
@@ -410,6 +463,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("bastard", "mongrel"),
             ("hellhound", "demonhound"),
             ("hell-hound", "demonhound"),
+            ("helldiver", "helldiver"),
             ("hell-bent", "demon-bent"),
             ("hell's bells", "by golly"),
             ("to hell with", "forget"),
@@ -465,6 +519,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("hell's", "perditions's"),
             (".  hell,", ".  heck,"),
             (">hell<", ">perdition<"),
+            (", \"hell,", ", \"heck,"),
         ] + hell_q_cases
         self.check_list(re_list, cases)
 
@@ -512,5 +567,49 @@ class TestCleanerRegex(unittest.TestCase):
             def groups(self): return ("A", None)
         drop_first_match("sub", MockMatch2())
 
+class TestGolden(unittest.TestCase):
+    def test_pg4300_golden(self):
+        self.maxDiff = None
+        import cleaner
+        original_file = 'pg4300-images.html'
+        golden_diff_file = 'pg4300-images.golden.diff'
+
+        if not os.path.exists(original_file):
+            self.skipTest(f"{original_file} not found")
+        if not os.path.exists(golden_diff_file):
+            self.skipTest(f"{golden_diff_file} not found")
+
+        with open(original_file, 'r', encoding='utf-8') as f:
+            original_content = f.read()
+
+        # The original file has CRLF. Let's normalize it to LF for comparison.
+        original_lines = original_content.replace('\r\n', '\n').splitlines(keepends=True)
+
+        cleaned_content = cleaner.clean_text(original_content)
+        cleaned_lines = cleaned_content.splitlines(keepends=True)
+
+        # Generate the unified diff
+        diff = difflib.unified_diff(
+            original_lines,
+            cleaned_lines,
+            fromfile=original_file,
+            tofile='pg4300-images-cleaned.html',
+            lineterm='\n'
+        )
+        actual_diff = "".join(diff)
+
+        with open(golden_diff_file, 'r', encoding='utf-8') as f:
+            expected_diff = f.read()
+
+        if actual_diff != expected_diff:
+            # If the diffs are different, show the diff of the diffs
+            diff_of_diffs = "".join(difflib.unified_diff(
+                expected_diff.splitlines(keepends=True),
+                actual_diff.splitlines(keepends=True),
+                fromfile='expected_diff',
+                tofile='actual_diff',
+                lineterm='\n'
+            ))
+            self.fail(f"Golden diff mismatch!\n\nDiff of diffs:\n{diff_of_diffs}")
 if __name__ == '__main__':
     unittest.main()

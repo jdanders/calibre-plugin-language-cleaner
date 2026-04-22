@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Language Cleaner Test Cases</title>
+    <style>
+        body { font-family: serif; line-height: 1.5; margin: 2em; }
+        h1 { color: #333; }
+        h2 { color: #666; border-bottom: 1px solid #ccc; margin-top: 2em; }
+        .sentence { margin-bottom: 0.5em; }
+        .note { font-style: italic; color: #777; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>Language Cleaner Substitution Test Document</h1>
+    <p class="note">This document contains sentences designed to trigger the various regex substitutions in cleaner.py.</p>
+
+    <h2>1. Worst sentence in the world ;) </h2>
+    <div class="sentence">Thank God we made it (he thanked God)! Oh, Christ, I forgot my keys. The old whorehouse was shut down in the crapper, Stop kissing ass to ride an ass and bray like an ass. The island of the damned, that's a damn shame. Life is a bitch sometimes, no shit, Sherlock. You're a fucking idiot, raising hell, burn in hell for your sins. An ass is a donkey. </div>
+
+    <h2>1. Religious Terms (Lord List & Vain Lord List)</h2>
+    <div class="sentence">Thank God we made it!</div>
+    <div class="sentence">Thank GOD we made it!</div>
+    <div class="sentence">Thank GOd we made it!</div>
+    <div class="sentence">Thank you, Jesus, for this food.</div>
+    <div class="sentence">My God, what have you done?</div>
+    <div class="sentence">Oh, Christ, I forgot my keys.</div>
+    <div class="sentence">Good God, man, look at the time!</div>
+    <div class="sentence">In the name of God, stop that noise!</div>
+    <div class="sentence">Where in God's name did I put my glasses?</div>
+    <div class="sentence">In Jesus's name, we pray.</div>
+    <div class="sentence">They found strength in Christ.</div>
+    <div class="sentence">I'll leave it to God Himself.</div>
+    <div class="sentence">By God, I'll find the truth!</div>
+    <div class="sentence">God knows I've tried my best.</div>
+    <div class="sentence">For God's sake, be quiet!</div>
+    <div class="sentence">They lived in a Godforsaken desert.</div>
+    <div class="sentence">The weather was absolutely godawful.</div>
+    <div class="sentence">He thanked God for the victory. (Vain test)</div>
+    <div class="sentence">"God!" he shouted in frustration.</div>
+    <div class="sentence">"Jesus-Christ," she muttered under her breath.</div>
+    <div class="sentence">Jesus Almighty, that was close!</div>
+
+    <h2>2. Slurs</h2>
+    <div class="sentence">He was described as a sheeny man.</div>
+    <div class="sentence">The word nigger should be replaced.</div>
+
+    <h2>3. Crude Language</h2>
+    <div class="sentence">Stop staring at her tits. (Tit for tat should not match).</div>
+    <div class="sentence">She called him a slut. They are all sluts.</div>
+    <div class="sentence">We went to a topless bar.</div>
+    <div class="sentence">The old whorehouse was shut down.</div>
+    <div class="sentence">I need to take a crap.</div>
+    <div class="sentence">He's in the crapper.</div>
+    <div class="sentence">Don't give me that crap.</div>
+    <div class="sentence">The baby crapped its diaper.</div>
+    <div class="sentence">That was a real cock-up.</div>
+    <div class="sentence">You're a cocksucker!</div>
+    <div class="sentence">That cocker spaniel is cute, but that cocker is an idiot.</div>
+    <div class="sentence">He received a kick to the cunt.</div>
+
+    <h2>4. Ass Varieties</h2>
+    <div class="sentence">Don't be such a smart ass.</div>
+    <div class="sentence">They are all smart-asses.</div>
+    <div class="sentence">Stop kissing ass to get a promotion.</div>
+    <div class="sentence">You can kiss my ass!</div>
+    <div class="sentence">That's a kick-ass guitar solo.</div>
+    <div class="sentence">You need to cover your ass.</div>
+    <div class="sentence">He's going to kick your ass.</div>
+    <div class="sentence">Bare-assed and ready.</div>
+    <div class="sentence">His jackass was stubborn.</div>
+    <div class="sentence">He began to bray like a jackass.</div>
+    <div class="sentence">Don't be a dumbass.</div>
+    <div class="sentence">Move your arse!</div>
+    <div class="sentence">You're a total asshole.</div>
+    <div class="sentence">Stop being a horse's ass.</div>
+
+    <h2>5. "Damn" and Variants</h2>
+    <div class="sentence">Goddammit, I'm late!</div>
+    <div class="sentence">Dammit, it's raining.</div>
+    <div class="sentence">I'll be damned if I go there.</div>
+    <div class="sentence">I don't give a damn.</div>
+    <div class="sentence">He damn near fell off the cliff.</div>
+    <div class="sentence">It's not worth a damn.</div>
+    <div class="sentence">The island of the damned.</div>
+    <div class="sentence">Your damned dog barked all night.</div>
+    <div class="sentence">That's a damn shame.</div>
+    <div class="sentence">I'm damn sure about this.</div>
+    <div class="sentence">He did his damnedest to win.</div>
+    <div class="sentence">The damning evidence was clear.</div>
+    <div class="sentence">It was a damnable lie.</div>
+    <div class="sentence">Damn you to hell!</div>
+    <div class="sentence">Damn the consequences, I'm going in.</div>
+
+    <h2>6. "Bitch" and Variants</h2>
+    <div class="sentence">You son of a bitch!</div>
+    <div class="sentence">Stop bitchin' about the food.</div>
+    <div class="sentence">He bitched all day.</div>
+    <div class="sentence">She always bitches about work.</div>
+    <div class="sentence">I will not bitch today.</div>
+    <div class="sentence">Life is a bitch sometimes.</div>
+
+    <h2>7. "Shit" and Variants</h2>
+    <div class="sentence">That's pure bullshit.</div>
+    <div class="sentence">Holy shit, did you see that?</div>
+    <div class="sentence">Oh, shit! I forgot the cake.</div>
+    <div class="sentence">No shit, Sherlock.</div>
+    <div class="sentence">He doesn't know shit about cars.</div>
+    <div class="sentence">There was a shitload of work.</div>
+    <div class="sentence">Just shitcan the whole project.</div>
+    <div class="sentence">He's a real shithead.</div>
+    <div class="sentence">This place is a shithole.</div>
+    <div class="sentence">Are you shittin' me?</div>
+    <div class="sentence">The shitter is broken.</div>
+    <div class="sentence">I feel shitty today.</div>
+    <div class="sentence">He doesn't give a shit.</div>
+    <div class="sentence">I got shit for my birthday.</div>
+
+    <h2>8. The F-Bomb</h2>
+    <div class="sentence">Fuck! That hurt.</div>
+    <div class="sentence">You motherfuck!</div>
+    <div class="sentence">What the fook is going on?</div>
+    <div class="sentence">Go fuck yourself!</div>
+    <div class="sentence">This is a total cluster fuck.</div>
+    <div class="sentence">Fuck you and your rules.</div>
+    <div class="sentence">What the fuck?</div>
+    <div class="sentence">Don't fuck up the dinner.</div>
+    <div class="sentence">Don't fuck with me.</div>
+    <div class="sentence">He's just fucking around.</div>
+    <div class="sentence">Fucking A, we won!</div>
+    <div class="sentence">You're a fucking idiot.</div>
+    <div class="sentence">He's a real fucker.</div>
+    <div class="sentence">Fuck it all!</div>
+    <div class="sentence">I fucked up the code.</div>
+
+    <h2>9. "Hell" and Variants</h2>
+    <div class="sentence">A hellhound chased them.</div>
+    <div class="sentence">He's hell-bent on leaving. (Not a helldiver).</div>
+    <div class="sentence">Hell's bells, that's loud!</div>
+    <div class="sentence">To hell with it!</div>
+    <div class="sentence">That beats the hell out of me.</div>
+    <div class="sentence">Go to hell.</div>
+    <div class="sentence">Raising hell at the party.</div>
+    <div class="sentence">There's no chance in hell.</div>
+    <div class="sentence">Burn in hell for your sins.</div>
+    <div class="sentence">It's a living hell.</div>
+    <div class="sentence">What the hell are you doing?</div>
+    <div class="sentence">How the hell did you get in?</div>
+    <div class="sentence">Sure as hell, he'll be there.</div>
+    <div class="sentence">He's a helluva guy.</div>
+    <div class="sentence">There's no way in hell.</div>
+    <div class="sentence">Catch hell from the boss.</div>
+    <div class="sentence">It hurt like hell.</div>
+    <div class="sentence">LIKE HELL I will!</div>
+    <div class="sentence">It's a hell of a day.</div>
+    <div class="sentence">Get the hell out!</div>
+    <div class="sentence">That's hellish work.</div>
+    <div class="sentence">This hellhole is falling apart.</div>
+    <div class="sentence">Welcome to >hell< (HTML test).</div>
+
+    <h2>10. Ass Context (Dirty vs. Clean)</h2>
+    <div class="sentence">He hauled ass down the road.</div>
+    <div class="sentence">The little ass was eating hay.</div>
+    <div class="sentence">Get your ass in gear.</div>
+    <div class="sentence">An ass is a donkey.</div>
+    <div class="sentence">He was acting like an ass.</div>
+
+    <h2>11. Triggers (Automatic Detection)</h2>
+    <p class="note">These phrases trigger 'use_vain' and 'use_dirty_ass'.</p>
+    <div class="sentence">Triggers: fuck, goddamn, asshole, dumbass.</div>
+</body>
+</html>

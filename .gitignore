@@ -1,2 +1,12 @@
 *.zip
 *.pyc
+__pycache__/
+
+# Test and Coverage artifacts
+.coverage
+htmlcov/
+MagicMock/
+.pytest_cache/
+
+# AI notes
+*.md
