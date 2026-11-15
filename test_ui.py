@@ -755,7 +755,7 @@ class TestUI(unittest.TestCase):
         """Disabling individual word-family flags removes only that group's rules."""
         c = sys.modules['calibre_plugins.language_clean_plugin.cleaner']
         language_check = c.language_check
-        slur_list = c.slur_list; crude_list = c.crude_list
+        slur_list = c.slur_list; profanity_list = c.unambiguous_profanity_list; crude_list = c.crude_list
         damn_list = c.damn_list; bitch_list = c.bitch_list
         shit_list = c.shit_list; fbomb_list = c.fbomb_list
         hell_list = c.hell_list; lord_list  = c.lord_list
@@ -763,7 +763,7 @@ class TestUI(unittest.TestCase):
 
         # All on (default) — every sub-list present
         rules = language_check('normal text')
-        for group in (slur_list, crude_list, damn_list, bitch_list,
+        for group in (slur_list, profanity_list, crude_list, damn_list, bitch_list,
                       shit_list, fbomb_list, hell_list, lord_list):
             self.assertTrue(
                 any(r in rules for r in group),
@@ -808,9 +808,11 @@ class TestUI(unittest.TestCase):
             self.assertNotIn(r, rules_no_ass)
         self.assertTrue(any(r in rules_no_ass for r in damn_list))
 
-        # Disable crude only (non-ass portion)
+        # Disable crude language, including the unambiguous profanity subgroup.
         rules = language_check('normal text', replace_crude=False)
         for r in c.crude_non_ass_list:
+            self.assertNotIn(r, rules)
+        for r in profanity_list:
             self.assertNotIn(r, rules)
 
         # Disable religious — neither lord_list nor vain_lord_list present
@@ -820,12 +822,13 @@ class TestUI(unittest.TestCase):
         for r in vain_lord_list:
             self.assertNotIn(r, rules)
 
-        # All off — result should be empty (no ass list either)
+        # Optional groups off — no crude or ass rules remain.
         rules = language_check(
             'normal text',
-            replace_slurs=False, replace_crude=False, replace_damn=False,
-            replace_bitch=False, replace_shit=False, replace_fbomb=False,
-            replace_hell=False, replace_religious=False, replace_ass=False,
+            replace_slurs=False, replace_crude=False,
+            replace_damn=False, replace_bitch=False, replace_shit=False,
+            replace_fbomb=False, replace_hell=False, replace_religious=False,
+            replace_ass=False,
         )
         self.assertEqual(rules, [])
         for group in (slur_list, c.crude_non_ass_list, c.ass_compound_list,
@@ -841,7 +844,7 @@ class TestUI(unittest.TestCase):
         combined = (c.slur_list + c.crude_list + c.damn_list + c.bitch_list
                     + c.shit_list + c.fbomb_list + c.hell_list)
         self.assertEqual(re_list, combined,
-                         're_list must equal slur+crude+damn+bitch+shit+fbomb+hell (same order)')
+                         're_list must equal slur+crude+damn+bitch+shit+fbomb+hell')
 
     def test_replace_god_flag(self):
         """replace_god=True replaces every standalone God; False leaves it alone."""

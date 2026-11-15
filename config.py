@@ -11,7 +11,7 @@ prefs.defaults = {
     # Crude language group
     # -----------------------------------------------------------------------
     'replace_crude': True,          # body-part terms, bathroom humour, crude
-                                    # compounds (t*ts, sl*t, cr*p, c*nt, d*ck,
+                                    # compounds (t*ts, sl*t, cr*p, d*ck,
                                     # b*stard, wh*rehouse, ass-compounds, etc.)
 
     # -----------------------------------------------------------------------

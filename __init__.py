@@ -89,7 +89,7 @@ def clean_html_content(html_text, engine):
 
         # Match text between tags, or between start/end and tags.
         # We include the preceding tag to check for script/style.
-        pattern = re.compile(r'(^|>[^<]*)([^<>]+)(<|$)')
+        pattern = re.compile(r'(<[^>]+>|^)([^<]+?)(<|$)')
         cleaned = pattern.sub(_sub_visible, html_text)
         return cleaned, 1 if cleaned != html_text else 0
 

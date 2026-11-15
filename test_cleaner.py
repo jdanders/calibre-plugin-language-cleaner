@@ -229,11 +229,11 @@ class TestCleanerRegex(unittest.TestCase):
         self.check_list(re_list, [
             ("cock-up", "mess up"),
             ("cockup", "mess up"),
-            ("cocksucker", "sucker"),
+            ("cocksucker", "jerk"),
             ("cocker", "idiot"),
             ("cocker spaniel", "cocker spaniel"),
             ("cocker-spaniel", "cocker-spaniel"),
-            ("cunt", "groin"),
+            ("cunt", "jerk"),
             ("Goddammit", "Dang it"),
             ("dammit", "dang it"),
         ])
@@ -524,7 +524,7 @@ class TestCleanerRegex(unittest.TestCase):
         self.check_list(re_list, cases)
 
     def test_language_check(self):
-        from cleaner import language_check, vain_lord_list, dirty_a_list, clean_a_list
+        from cleaner import language_check, vain_lord_list
 
         # Test default
         rules = language_check("Normal text")
@@ -538,6 +538,75 @@ class TestCleanerRegex(unittest.TestCase):
         # Test dirty ass
         rules = language_check("asshole")
         self.assertIn(dirty_a_list[0], rules)
+
+    def test_unambiguous_profanity_auto_detect(self):
+        """Unambiguous profanities (cunt, cocksucker, etc.) trigger profane register."""
+        from cleaner import language_check, vain_lord_list, dirty_a_list, clean_a_list
+
+        # 'cunt' must trigger exclamatory/vain register for religious expressions
+        rules = language_check("What a miserable cunt he is.")
+        self.assertIn(vain_lord_list[0], rules)
+
+        # 'cocksucker' must trigger exclamatory/vain register
+        rules = language_check("You cocksucker!")
+        self.assertIn(vain_lord_list[0], rules)
+
+        # Religious exclamations with comma or period (not just '!') must trigger vain register
+        rules = language_check("For Christ's sake, hurry up.")
+        self.assertIn(vain_lord_list[0], rules)
+
+        rules = language_check("Holy Jesus, that was close.")
+        self.assertIn(vain_lord_list[0], rules)
+
+    def test_unambiguous_profanity_respects_crude_preference(self):
+        """Terms skip contextual detection but still follow the crude toggle."""
+        from cleaner import language_check, RuleEngine, unambiguous_profanity_list, crude_non_ass_list
+
+        # Unambiguous and context-sensitive crude rules both follow replace_crude.
+        rules_no_crude = language_check("sample", replace_crude=False)
+        for r in unambiguous_profanity_list:
+            self.assertNotIn(r, rules_no_crude)
+        for r in crude_non_ass_list:
+            self.assertNotIn(r, rules_no_crude)
+
+        engine_no_crude = RuleEngine(rules_no_crude)
+        self.assertEqual(engine_no_crude.process_line("He called her a cunt."), "He called her a cunt.")
+        self.assertEqual(engine_no_crude.process_line("You cocksucker, you."), "You cocksucker, you.")
+        self.assertEqual(engine_no_crude.process_line("He is an asshole."), "He is an asshole.")
+        self.assertEqual(engine_no_crude.process_line("What a slut."), "What a slut.")
+        self.assertEqual(engine_no_crude.process_line("I need to take a crap."), "I need to take a crap.")
+
+        # With crude cleanup on, contextual override values don't suppress them.
+        rules = language_check("sample", replace_crude=True, ass_override='clean', vain_override='never')
+        for r in unambiguous_profanity_list:
+            self.assertIn(r, rules)
+
+    def test_dual_meaning_context_protections(self):
+        """Legitimate genteel contexts (birds, food) are protected from false positives."""
+        from cleaner import RuleEngine, re_list
+        engine = RuleEngine(re_list)
+
+        # Avian references must not become 'belly'
+        bird_cases = [
+            ("A blue tit landed on the fence.", "A blue tit landed on the fence."),
+            ("We observed a great tit in the garden.", "We observed a great tit in the garden."),
+            ("The marsh tit has distinctive feathers.", "The marsh tit has distinctive feathers."),
+            ("A coal tit and a willow tit flew together.", "A coal tit and a willow tit flew together."),
+            ("The tufted titmouse was feeding.", "The tufted titmouse was feeding."),
+            ("That is a juicy titbit of gossip.", "That is a juicy titbit of gossip."),
+            ("This is tit for tat.", "This is tit for tat."),
+        ]
+        for original, expected in bird_cases:
+            self.assertEqual(engine.process_line(original), expected)
+
+        # Vulgar anatomical 'tits' must still be replaced
+        self.assertEqual(engine.process_line("Stop staring at her tits."), "Stop staring at her belly.")
+        self.assertEqual(engine.process_line("She showed her tit to him."), "She showed her belly to him.")
+
+        # British dessert 'spotted dick' must not become 'spotted toe'
+        self.assertEqual(engine.process_line("We had spotted dick for dessert."), "We had spotted dick for dessert.")
+        # Standalone vulgar 'dick' is still replaced
+        self.assertEqual(engine.process_line("He was being a dick."), "He was being a toe.")
 
     def test_first_case_upper(self):
         cases = [

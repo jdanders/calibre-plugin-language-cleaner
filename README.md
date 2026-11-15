@@ -87,6 +87,7 @@ The word "\*ss" has two very different meanings. You can choose whether to repla
 
 ### Crude language
 - **Replace crude language** — Body-part references, bathroom humour, and crude compound words (cr\*p, d\*ck, b\*stard, etc.)
+- Unambiguous insults (including c\*nt, c\*cksucker, d\*ckhead, and a\*sshole) are softened to “jerk”; sl\*t is softened to “trollop.” Like other crude-language replacements, they follow **Replace crude language** and are not decided by ass or religious auto-detection.
 
 ### Slurs
 - **Replace racial / ethnic slurs** — Common offensive slurs; on by default.

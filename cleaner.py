@@ -177,16 +177,30 @@ slur_list = [
     (re.compile(r'\bnigger\b', re.I), 'black', keep_case),
 ]
 
+# Insults with no ordinary literal/genteel reading; these are part of the
+# user's crude-language preference group, but need no contextual auto-detection.
+unambiguous_profanity_list = [
+    (re.compile(r'\bcunt\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\bcunts\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bcocksucker\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\bcocksuckers\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bdick(?:head|weed)\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\bdick(?:heads|weeds)\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\ban\W(?:ass|arse)hole\b', re.I), 'a jerk', keep_case),
+    (re.compile(r'\b(?:ass|arse)hole\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\b(?:ass|arse)holes\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bslut\b', re.I), 'trollop', keep_case),
+    (re.compile(r'\bsluts\b', re.I), 'trollops', keep_case),
+]
+
 # Crude language: body-part references, sexual terms, bathroom terms.
 # Note: ass compound words live in ass_compound_list (below) so they can be
 # toggled independently via the replace_ass preference.
 crude_non_ass_list = [
-    # Remove suggestive 'tits' \u2014 don't do 'tit for tat', tit-tat-toe, or split tit-ular
-    (re.compile(r'\b[tT][iI][tT][sS]?\b(?! for)(?!-tat)(?!-ul)',
+    # Remove suggestive 'tits' \u2014 don't do 'tit for tat', tit-tat-toe, tit-ular,
+    # titmouse/titmice, titbit, or common bird names (blue tit, great tit, etc.)
+    (re.compile(r'(?<!\bblue )(?<!\bgreat )(?<!\bcoal )(?<!\bmarsh )(?<!\bcrested )(?<!\bwillow )(?<!\blong-tailed )(?<!\btufted )\b[tT][iI][tT][sS]?\b(?! for)(?!-tat)(?!-ul)(?!mouse)(?!mice)(?!bit)',
                 re.I), 'belly', keep_case),
-    # Slut is rude, replace with slightly better trollop
-    (re.compile(r'\bslut\b', re.I), 'trollop', keep_case),
-    (re.compile(r'\bsluts\b', re.I), 'trollops', keep_case),
     # Change topless bar to just bar
     (re.compile(r'topless\Wbar', re.I), 'bar', keep_case),
     # Replace whore with woman (not always a good replacement)
@@ -202,12 +216,8 @@ crude_non_ass_list = [
     (re.compile(r'\bcrapped\b', re.I), 'wet', keep_case),
     # Cock-up with mess-up
     (re.compile(r'\bcock.?up\b', re.I), "mess up", keep_case),
-    # Cocksucker with sucker
-    (re.compile(r'\bcock.?(?=suc)', re.I), "", False),
     # Cocker with idiot (but not cocker spaniel)
     (re.compile(r'\bcocker\b(?![ -]spani)', re.I), "idiot", keep_case),
-    # Cunt
-    (re.compile(r'\bcunt\b', re.I), 'groin', keep_case),
     #########################################
     # dick
     #########################################
@@ -216,12 +226,10 @@ crude_non_ass_list = [
                 re.U+re.I), "mess", first_case),
     # dickin['/g]
     (re.compile(r'dick(?=(in[^\s][^o]))', re.U+re.I), "mess", keep_case),
-    #dickweed, dickhead
-    (re.compile(r'dick[WwHh]e[AaEe]d', re.I), "jerk", keep_case),
     # know dick
     (re.compile(r'(?<=[Kk]now )dick'), "squat", keep_case),
-    # dick on its own (toe is just sort of random...), not bird dickcissel
-    (re.compile(r'\bdick\b(?!-ciss)'), "toe", keep_case),
+    # dick on its own (toe is just sort of random...), not bird dickcissel or dessert spotted dick
+    (re.compile(r'(?<!spotted )\bdick\b(?!-ciss)'), "toe", keep_case),
     #########################################
     # bastard
     #########################################
@@ -259,9 +267,6 @@ ass_compound_list = [
     (re.compile(r'(?<=bray like a )(jack|dumb)ass\b', re.I), "donkey", keep_case),
     (re.compile(r'(jack|dumb)ass\b', re.I), "jerk", keep_case),
     (re.compile(r'(jack|dumb)asses\b', re.I), "jerks", keep_case),
-    # asshole
-    (re.compile(r'an\W(ass|arse)hole', re.I), "a jerk", keep_case),
-    (re.compile(r'(ass|arse)hole', re.I), "jerk", keep_case),
     # horse's ass
     (re.compile(r'horse[^\s]?s ?(ass|arse)\b', re.U+re.I), "jerk", keep_case),
     (re.compile(r'horse[^\s]?s ?(asses|arses)\b', re.U+re.I), "jerks", keep_case),
@@ -270,9 +275,10 @@ ass_compound_list = [
     (re.compile(r'\barses\b', re.I), 'rears', keep_case),
 ]
 
-# crude_list = crude_non_ass_list + ass_compound_list so that re_list identity
-# is preserved (test_cleaner.py imports re_list and must pass unchanged).
-crude_list = crude_non_ass_list + ass_compound_list
+# crude_list combines unambiguous profanity, crude non-ass terms, and ass compounds
+# to preserve the canonical re_list. In language_check, the first two groups are
+# controlled by replace_crude and ass compounds by replace_ass.
+crude_list = unambiguous_profanity_list + crude_non_ass_list + ass_compound_list
 
 # "Damn" and all its variants
 damn_list = [
@@ -658,7 +664,7 @@ def language_check(text, vain_override='auto', ass_override='auto',
     if replace_slurs:
         ret_val += slur_list
     if replace_crude:
-        ret_val += crude_non_ass_list
+        ret_val += unambiguous_profanity_list + crude_non_ass_list
     if replace_ass:
         ret_val += ass_compound_list
     if replace_damn:
@@ -682,7 +688,12 @@ def language_check(text, vain_override='auto', ass_override='auto',
     elif vain_override == 'never':
         use_vain = False
     else:  # auto
-        if re.search(r"(for Christ's sake!|Holy Christ!|Holy Jesus!|for God's sake!|God almighty!|goddamn|fuck)", text, re.I):
+        vain_trigger = (
+            r"(for Christ's sake|Holy Christ|Holy Jesus|for God's sake|God almighty|"
+            r"goddamn|dammit|fook|fuck|motherfuck|cunt|cocksuck|dickhead|dickweed|"
+            r"asshole|arsehole|slut|shit)"
+        )
+        if re.search(vain_trigger, text, re.I):
             use_vain = True
 
     if replace_religious and use_vain:
@@ -704,7 +715,7 @@ def language_check(text, vain_override='auto', ass_override='auto',
         elif ass_override == 'clean':
             use_dirty_ass = False
         else:  # auto
-            if re.search(r"(dumbass|asshole|smart ass|kick ass|ass kick|ass handed|badass|cover.{0,5}ass)", text):
+            if re.search(r"(dumbass|asshole|arsehole|smart\W?(ass|arse)|kick\W?(ass|arse)|ass\W?kick|ass\W?handed|badass|cover.{0,5}(ass|arse))", text, re.I):
                 use_dirty_ass = True
 
         if use_dirty_ass:
