@@ -96,13 +96,18 @@ class TestCleanerRegex(unittest.TestCase):
             ("asses", "donkeys"),
             ("an Ass", "a Donkey"),
             ("an ass", "a donkey"),
-            ("an arse", "a donkey"),
+            ("an arse", "a fool"),
             ("ass", "donkey"),
-            ("arse", "donkey"),
+            ("arse", "rear"),
             ("in ass", "in ass"),
             ("<b>ass</b>", "<b>ass</b>"),
         ]
-        self.check_list(clean_a_list, cases)
+        from cleaner import language_check
+        rules = language_check(
+            'sample', replace_crude=False, replace_british=True,
+            replace_ass=True, ass_override='clean',
+        )
+        self.check_list(rules, cases)
 
 
     def test_lord_list(self):
@@ -208,11 +213,42 @@ class TestCleanerRegex(unittest.TestCase):
             ("slut", "trollop"),
             ("sluts", "trollops"),
             ("sheeny", "man"),
-            ("nigger", "black"),
+            ("nigger", "person"),
             ("topless bar", "bar"),
             ("topless-bar", "bar"),
             ("blasted zxsain windpipe", "blasted windpipe"),
         ])
+
+    def test_slurs_generalize_without_changing_identity_terms(self):
+        from cleaner import RuleEngine, slur_list
+        engine = RuleEngine(slur_list)
+        cases = [
+            ('bad niggers', 'bad people'),
+            ('a nigger', 'a person'),
+            ("a nigger's hat", "a person's hat"),
+            ('thick niggerlips', 'thick lips'),
+            ('thick nigger lips', 'thick lips'),
+            ('nigger straw', 'straw'),
+            ('what did she marry a coon like that for?',
+             'what did she marry a person like that for?'),
+            ('coloured coons in white suits', 'people in white suits'),
+            ('cutest colour coon', 'cutest person'),
+            ('dirty Jew', 'dirty person'),
+            ('the little jewy', 'the little fellow'),
+            ('those jewies does', 'those people do'),
+            ('the jewman', 'the man'),
+            ('sheeny', 'man'),
+            ('sheenies', 'men'),
+            ('Jew and Jews are Jewish people.', 'Jew and Jews are Jewish people.'),
+            ('A raccoon crossed the road.', 'A raccoon crossed the road.'),
+            ('a coon hat', 'a coon hat'),
+        ]
+        for original, expected in cases:
+            self.assertEqual(engine.process_line(original), expected)
+        self.assertEqual(
+            engine.process_text('marry a coon like\nthat for?'),
+            'marry a person like\nthat for?',
+        )
 
     def test_re_list_whorehouse_crap(self):
         self.check_list(re_list, [
@@ -231,9 +267,22 @@ class TestCleanerRegex(unittest.TestCase):
             ("cockup", "mess up"),
             ("cocksucker", "jerk"),
             ("cocker", "idiot"),
+            ("you cocker!", "you idiot!"),
+            ("cocker's", "idiot's"),
             ("cocker spaniel", "cocker spaniel"),
+            ("cocker spaniels", "cocker spaniels"),
             ("cocker-spaniel", "cocker-spaniel"),
-            ("cunt", "jerk"),
+            ("cocker-spaniels", "cocker-spaniels"),
+            ("cunt", "crotch"),
+            ("CUNT", "CROTCH"),
+            ("cunts", "crotches"),
+            ("cunty", "obnoxious"),
+            ("you cunt", "you jerk"),
+            ("you absolute cunt", "you absolute jerk"),
+            ("He is a miserable cunt", "He is a miserable jerk"),
+            ("What a miserable cunt he is.", "What a miserable jerk he is."),
+            ("you cunts", "you jerks"),
+            ("you absolute cunts", "you absolute jerks"),
             ("Goddammit", "Dang it"),
             ("dammit", "dang it"),
         ])
@@ -348,6 +397,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("it's a bitch", "it's tough"),
             ("bitch", "jerk"),
             ("bitches", "jerks"),
+            ("bitchbody", "jerkbody"),
             ("bullshit", "rubbish"),
             ("bull.shit", "rubbish"),
             ("horseshit", "rubbish"),
@@ -461,6 +511,9 @@ class TestCleanerRegex(unittest.TestCase):
             ("know dick", "know squat"),
             ("dick", "toe"),
             ("bastard", "mongrel"),
+            ("bastard son", "mongrel son"),
+            ("you bastard", "you mongrel"),
+            ("those bastards", "those mongrels"),
             ("hellhound", "demonhound"),
             ("hell-hound", "demonhound"),
             ("helldiver", "helldiver"),
@@ -470,6 +523,12 @@ class TestCleanerRegex(unittest.TestCase):
             ("the hell with", "forget"),
             ("hell with", "heck with"),
             ("beats the hell out of", "beats"),
+            ("where the blue hell am I?", "where the heck am I?"),
+            ("not in hell", "not in perdition"),
+            ("snowball in hell", "snowball in perdition"),
+            ("Hell open to christians", "Perdition open to christians"),
+            ("O hell!", "Oh heck!"),
+            ("God thrust Satan down to hell.", "God thrust Satan down to perdition."),
             ("to hell", "to perdition"),
             ("some hell", "some trouble"),
             ("give him hell", "give him trouble"),
@@ -497,7 +556,8 @@ class TestCleanerRegex(unittest.TestCase):
             ("all hell", "all perdition"),
             ("hell was", "heck was"),
             ("hell to pay", "heck to pay"),
-            ("bloody hell", "bloody heck"),
+            ("bloody hell", "heck"),
+            ("like bloody hell", "like heck"),
             ("dang hell", "dang heck"),
             ("look like hell", "look like mad"),
             ("looked like hell", "looked really bad"),
@@ -516,7 +576,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("real hell", "real pit"),
             ("this hellhole", "this pit"),
             ("this hellpit", "this pit"),
-            ("hell's", "perditions's"),
+            ("hell's", "perdition's"),
             (".  hell,", ".  heck,"),
             (">hell<", ">perdition<"),
             (", \"hell,", ", \"heck,"),
@@ -558,6 +618,37 @@ class TestCleanerRegex(unittest.TestCase):
         rules = language_check("Holy Jesus, that was close.")
         self.assertIn(vain_lord_list[0], rules)
 
+    def test_fbomb_compound_replacements(self):
+        from cleaner import clean_text
+        self.assertEqual(clean_text('fuckwit'), 'idiot')
+        self.assertEqual(clean_text('fuckwits'), 'idiots')
+        self.assertEqual(clean_text('fuckface'), 'jerk')
+        self.assertEqual(clean_text('fuckhead'), 'idiot')
+        self.assertEqual(clean_text('fuckboy'), 'jerk')
+        self.assertEqual(clean_text('unfuckingbelievable'), 'unbelievable')
+
+    def test_reviewed_inflections_and_compounds(self):
+        from cleaner import clean_text
+        cases = [
+            ('bitches', 'jerks'),
+            ('bitchy', 'mean'),
+            ('bitchiness', 'meanness'),
+            ('he shits', 'he defecates'),
+            ('dipshits', 'idiots'),
+            ('go apeshit', 'go wild'),
+            ('batshit crazy', 'completely crazy'),
+            ('shitfaced', 'drunk'),
+            ('badass', 'tough'),
+            ('half-assed', 'half-baked'),
+            ('asswipes', 'jerks'),
+            ('whore', 'prostitute'),
+            ('whores', 'prostitutes'),
+            ('whoredom', 'prostitution'),
+            ('scrotumtightening sea', 'gut-tightening sea'),
+        ]
+        for original, expected in cases:
+            self.assertEqual(clean_text(original), expected)
+
     def test_unambiguous_profanity_respects_crude_preference(self):
         """Terms skip contextual detection but still follow the crude toggle."""
         from cleaner import language_check, RuleEngine, unambiguous_profanity_list, crude_non_ass_list
@@ -580,6 +671,88 @@ class TestCleanerRegex(unittest.TestCase):
         rules = language_check("sample", replace_crude=True, ass_override='clean', vain_override='never')
         for r in unambiguous_profanity_list:
             self.assertIn(r, rules)
+
+    def test_crude_subgroups_are_independently_selectable(self):
+        from cleaner import (language_check, strong_profanity_list, fbomb_list,
+                             sexual_anatomical_list, crude_insult_list,
+                             mild_crude_list, british_list, RuleEngine)
+        rules = language_check(
+            'sample', replace_crude=False,
+            replace_strong=True, replace_sexual=False,
+            replace_insults=False, replace_mild_crude=False,
+            replace_british=False,
+        )
+        self.assertTrue(all(rule in rules for rule in strong_profanity_list))
+        self.assertTrue(all(rule in rules for rule in fbomb_list))
+        for group in (sexual_anatomical_list, crude_insult_list,
+                      mild_crude_list, british_list):
+            for rule in group:
+                self.assertNotIn(rule, rules)
+
+    def test_british_rules_are_context_guarded(self):
+        from cleaner import RuleEngine, british_list
+        engine = RuleEngine(british_list)
+        self.assertEqual(engine.process_line('You absolute twat!'), 'You fool!')
+        self.assertEqual(engine.process_line('What a bunch of twats!'), 'What a bunch of fools!')
+        self.assertEqual(engine.process_line('You wanker!'), 'You idiot!')
+        self.assertEqual(engine.process_line('What a load of bollocks.'), 'What a load of nonsense.')
+        self.assertEqual(engine.process_line('Bugger off!'), 'Go away!')
+        self.assertEqual(engine.process_line('Where the bugger is it?'), 'Where the heck is it?')
+        self.assertEqual(engine.process_line("The poor bugger's tool."), "The poor fellow's tool.")
+        self.assertEqual(engine.process_line('The poor buggers waited.'), 'The poor fellows waited.')
+        self.assertEqual(engine.process_line('I am buggered.'), 'I am exhausted.')
+        self.assertEqual(engine.process_line('That is a bloody awful idea.'), 'That is a very awful idea.')
+        self.assertEqual(engine.process_line('He is a bloody fool.'), 'He is a fool.')
+        self.assertEqual(engine.process_line('Most bloody awful story.'), 'Most awful story.')
+        self.assertEqual(engine.process_line('He was bloody lucky.'), 'He was very lucky.')
+        self.assertEqual(engine.process_line('These bloody English!'), 'These English!')
+        self.assertEqual(engine.process_line('A bloody swindle.'), 'A swindle.')
+        self.assertEqual(engine.process_line('Choking with bloody foolery.'), 'Choking with foolery.')
+        self.assertEqual(engine.process_line('Hanging over the bloody paper.'), 'Hanging over the paper.')
+        self.assertEqual(engine.process_line('Those bloody (wait for it) cuckoos.'), 'Those (wait for it) cuckoos.')
+        self.assertEqual(engine.process_line('The bloody nag took fright.'), 'The nag took fright.')
+        self.assertEqual(engine.process_line('Bloody wars, says I.'), 'Wars, says I.')
+        # Avoid changing literal blood references and the ordinary verb "prick".
+        self.assertEqual(engine.process_line('She had a bloody nose.'), 'She had a bloody nose.')
+        self.assertEqual(engine.process_line('Rawhead and bloody bones.'), 'Rawhead and bloody bones.')
+        self.assertEqual(engine.process_line('Bloody bridge is over there.'), 'Bloody bridge is over there.')
+        self.assertEqual(engine.process_line('He was bloodying the sea.'), 'He was bloodying the sea.')
+        self.assertEqual(engine.process_line('Prick the paper with a pin.'), 'Prick the paper with a pin.')
+        self.assertEqual(engine.process_line('He got kicked in the bollocks.'), 'He got kicked in the bollocks.')
+        from cleaner import mild_crude_list
+        mild = RuleEngine(mild_crude_list)
+        self.assertEqual(mild.process_line('Take a piss.'), 'Use the toilet.')
+        self.assertEqual(mild.process_line("I'm pissed off."), "I'm angry.")
+        self.assertEqual(mild.process_line('Piss off!'), 'Go away!')
+        self.assertEqual(mild.process_line('He pissed off his friend.'), 'He annoyed his friend.')
+        self.assertEqual(mild.process_line('horsepiss'), 'horse urine')
+        self.assertEqual(mild.process_line('He pissed on the door.'), 'He urinated on the door.')
+        self.assertEqual(mild.process_line('The dog pissed against a rock.'), 'The dog urinated against a rock.')
+        self.assertEqual(mild.process_line('He pissed quick short at the wall.'), 'He urinated quickly at the wall.')
+        self.assertEqual(mild.process_line('Piss on the wall!'), 'Urinate on the wall!')
+        self.assertEqual(mild.process_line('Men\'s beery piss.'), "Men's beery urine.")
+        self.assertEqual(mild.process_line('Pisspots'), 'Chamber pots')
+        self.assertEqual(mild.process_line('Pisser Burke arrived.'), 'Pisser Burke arrived.')
+        self.assertEqual(engine.process_line('Fecking matches.'), 'Darn matches.')
+        self.assertEqual(engine.process_line('Scutter!'), 'Rubbish!')
+        self.assertEqual(engine.process_line('That is ballocks.'), "That's nonsense.")
+        self.assertEqual(engine.process_line("Who's the old ballocks?"), "Who's the old fool?")
+        self.assertEqual(engine.process_line("I don't give a bugger who he is."), "I don't care who he is.")
+        self.assertEqual(engine.process_line('The poxy bowsy left them off.'), 'The wretched bowsy left them off.')
+        self.assertEqual(engine.process_line('Arse!'), 'Rear!')
+        self.assertEqual(engine.process_line('flabbyarse of a wife'), 'flabby rear of a wife')
+        self.assertEqual(engine.process_line('An arse.'), 'A fool.')
+        self.assertEqual(engine.process_line('He fell on his arse.'), 'He fell on his rear.')
+
+        # Clean donkey mode must not turn arse into a donkey; the British
+        # language rules still soften its vulgar meaning.
+        from cleaner import language_check
+        clean_mode = RuleEngine(language_check(
+            'sample', replace_crude=False, replace_british=True,
+            replace_ass=True, ass_override='clean',
+        ))
+        self.assertEqual(clean_mode.process_line('The arse hurt.'), 'The rear hurt.')
+        self.assertEqual(clean_mode.process_line('The ass brayed.'), 'The donkey brayed.')
 
     def test_dual_meaning_context_protections(self):
         """Legitimate genteel contexts (birds, food) are protected from false positives."""
@@ -607,6 +780,9 @@ class TestCleanerRegex(unittest.TestCase):
         self.assertEqual(engine.process_line("We had spotted dick for dessert."), "We had spotted dick for dessert.")
         # Standalone vulgar 'dick' is still replaced
         self.assertEqual(engine.process_line("He was being a dick."), "He was being a toe.")
+        # A body-part reference is not rewritten as an insult.
+        self.assertEqual(engine.process_line("He got kicked in the cunt."), "He got kicked in the crotch.")
+        self.assertEqual(engine.process_line("the grey sunken cunt of the world"), "the grey sunken crotch of the world")
 
     def test_first_case_upper(self):
         cases = [

@@ -1,9 +1,9 @@
 try:
-    from qt.core import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox,
+    from qt.core import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QCheckBox,
                          QComboBox, QTableWidget, QTableWidgetItem, QPushButton,
                          QHeaderView, QLineEdit, QFileDialog, QGroupBox)
 except ImportError:
-    from PyQt5.Qt import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox,
+    from PyQt5.Qt import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QCheckBox,
                           QComboBox, QTableWidget, QTableWidgetItem, QPushButton,
                           QHeaderView, QLineEdit, QFileDialog, QGroupBox)
 
@@ -30,6 +30,13 @@ class ConfigWidget(QWidget):
         profanity_group = QGroupBox('Profanity — individual word families')
         profanity_layout = QVBoxLayout()
 
+        strong_pref = prefs.get('replace_strong')
+        if strong_pref is None:
+            strong_pref = prefs.get('replace_crude', True)
+        self.strong = QCheckBox('Replace strong profanity (c***, cocksucker, f***)')
+        self.strong.setChecked(strong_pref)
+        profanity_layout.addWidget(self.strong)
+
         self.damn = QCheckBox('Replace d*** variants')
         self.damn.setChecked(prefs.get('replace_damn', True))
         profanity_layout.addWidget(self.damn)
@@ -41,10 +48,6 @@ class ConfigWidget(QWidget):
         self.shit = QCheckBox('Replace s*** variants')
         self.shit.setChecked(prefs.get('replace_shit', True))
         profanity_layout.addWidget(self.shit)
-
-        self.fbomb = QCheckBox('Replace f*** variants')
-        self.fbomb.setChecked(prefs.get('replace_fbomb', True))
-        profanity_layout.addWidget(self.fbomb)
 
         self.hell = QCheckBox('Replace h*** variants')
         self.hell.setChecked(prefs.get('replace_hell', True))
@@ -63,12 +66,13 @@ class ConfigWidget(QWidget):
             'Choose whether to assume usage is an insult or to assume '
             'it refers to a donkey.\n'
             'Compound words (sm*rt-*ss, j*ck*ss, k*ss-*ss, etc.) are always '
-            'replaced regardless of this setting.</small>'
+            'replaced regardless of the mode. Asshole is controlled by the '
+            'Crude insults option.</small>'
         )
         ass_note.setWordWrap(True)
         ass_layout.addWidget(ass_note)
 
-        self.replace_ass = QCheckBox('Replace *ss / *rse (standalone and compound words)')
+        self.replace_ass = QCheckBox('Replace standalone *ss / *rse and donkey-related compounds')
         self.replace_ass.setChecked(prefs.get('replace_ass', True))
         ass_layout.addWidget(self.replace_ass)
 
@@ -142,14 +146,30 @@ class ConfigWidget(QWidget):
         crude_group = QGroupBox('Crude language')
         crude_layout = QVBoxLayout()
         crude_note = QLabel(
-            '<small>Body-part references, bathroom humour, and crude compound words '
-            '(cr*p, d*ck, b*stard, etc.)</small>'
+            '<small>Choose categories to soften. Ambiguous terms are only changed '
+            'where the rules have a context guard.</small>'
         )
         crude_note.setWordWrap(True)
         crude_layout.addWidget(crude_note)
-        self.crude = QCheckBox('Replace crude language')
-        self.crude.setChecked(prefs.get('replace_crude', True))
-        crude_layout.addWidget(self.crude)
+        legacy_crude = prefs.get('replace_crude', True)
+
+        def group_enabled(key):
+            value = prefs.get(key)
+            return legacy_crude if value is None else value
+
+        self.sexual = QCheckBox('Sexual / anatomical language')
+        self.insults = QCheckBox('Crude insults')
+        self.mild_crude = QCheckBox('Mild bodily / bathroom language')
+        self.british = QCheckBox('British & Irish slang (guarded idioms)')
+        self.sexual.setChecked(group_enabled('replace_sexual'))
+        self.insults.setChecked(group_enabled('replace_insults'))
+        self.mild_crude.setChecked(group_enabled('replace_mild_crude'))
+        self.british.setChecked(group_enabled('replace_british'))
+        crude_grid = QGridLayout()
+        for i, checkbox in enumerate((self.sexual, self.insults,
+                                      self.mild_crude, self.british)):
+            crude_grid.addWidget(checkbox, i // 2, i % 2)
+        crude_layout.addLayout(crude_grid)
         crude_group.setLayout(crude_layout)
         self.l.addWidget(crude_group)
 
@@ -361,15 +381,19 @@ class ConfigWidget(QWidget):
             vain_override=self._vain_stored_value(),
             ass_override=self._ass_stored_value(),
             replace_slurs=self.slurs.isChecked(),
-            replace_crude=self.crude.isChecked(),
+            replace_crude=True,
             replace_damn=self.damn.isChecked(),
             replace_bitch=self.bitch.isChecked(),
             replace_shit=self.shit.isChecked(),
-            replace_fbomb=self.fbomb.isChecked(),
             replace_hell=self.hell.isChecked(),
             replace_religious=self.religious.isChecked(),
             replace_ass=self.replace_ass.isChecked(),
             replace_god=self.replace_god.isChecked(),
+            replace_strong=self.strong.isChecked(),
+            replace_sexual=self.sexual.isChecked(),
+            replace_insults=self.insults.isChecked(),
+            replace_mild_crude=self.mild_crude.isChecked(),
+            replace_british=self.british.isChecked(),
         )
         rules.extend(custom_rules)
         engine = RuleEngine(rules)
@@ -396,11 +420,22 @@ class ConfigWidget(QWidget):
                 custom.append([find, replace, ignore_case, is_regex])
 
             prefs.set('replace_slurs',    self.slurs.isChecked())
-            prefs.set('replace_crude',    self.crude.isChecked())
+            group_flags = {
+                'replace_strong': self.strong.isChecked(),
+                'replace_sexual': self.sexual.isChecked(),
+                'replace_insults': self.insults.isChecked(),
+                'replace_mild_crude': self.mild_crude.isChecked(),
+                'replace_british': self.british.isChecked(),
+            }
+            for key, enabled in group_flags.items():
+                prefs.set(key, enabled)
+            # Preserve the legacy master preference for older plugin versions.
+            prefs.set('replace_crude', all(group_flags.values()))
             prefs.set('replace_damn',     self.damn.isChecked())
             prefs.set('replace_bitch',    self.bitch.isChecked())
             prefs.set('replace_shit',     self.shit.isChecked())
-            prefs.set('replace_fbomb',    self.fbomb.isChecked())
+            # Keep the old F-word preference key in sync for older versions.
+            prefs.set('replace_fbomb',    self.strong.isChecked())
             prefs.set('replace_hell',     self.hell.isChecked())
             prefs.set('replace_religious', self.religious.isChecked())
             prefs.set('replace_god',       self.replace_god.isChecked())

@@ -10,9 +10,14 @@ prefs.defaults = {
     # -----------------------------------------------------------------------
     # Crude language group
     # -----------------------------------------------------------------------
-    'replace_crude': True,          # body-part terms, bathroom humour, crude
-                                    # compounds (t*ts, sl*t, cr*p, d*ck,
-                                    # b*stard, wh*rehouse, ass-compounds, etc.)
+    'replace_crude': True,          # legacy fallback for new crude subgroups
+    # None means inherit the old replace_crude setting until the user saves
+    # the reorganized options for the first time.
+    'replace_strong': None,
+    'replace_sexual': None,
+    'replace_insults': None,
+    'replace_mild_crude': None,
+    'replace_british': None,
 
     # -----------------------------------------------------------------------
     # Individual profanity word families
@@ -20,7 +25,7 @@ prefs.defaults = {
     'replace_damn': True,           # d*mn and all variants
     'replace_bitch': True,          # b*tch and all variants
     'replace_shit': True,           # sh*t and all variants
-    'replace_fbomb': True,          # the f-bomb and all variants
+    'replace_fbomb': True,          # legacy key; mirrored from replace_strong
     'replace_hell': True,           # h*ll and all variants
 
     # -----------------------------------------------------------------------
@@ -49,7 +54,8 @@ prefs.defaults = {
 
     # Whether to replace ass/arse compound words and standalone ass/arse at all.
     # When False, dirty_a_list / clean_a_list are skipped entirely, and the
-    # ass compound words inside crude_list are also suppressed.
+    # ass/arse compound rules are also suppressed; asshole is controlled by
+    # the crude-insult subgroup instead.
     'replace_ass': True,
 
     # -----------------------------------------------------------------------

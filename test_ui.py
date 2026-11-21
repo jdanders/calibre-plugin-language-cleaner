@@ -86,6 +86,9 @@ class MockQt:
         def addWidget(self, w): pass
         def addLayout(self, l): pass
         def setContentsMargins(self, *args): pass
+    class QGridLayout:
+        def __init__(self, *args, **kwargs): pass
+        def addWidget(self, *args, **kwargs): pass
     class QCheckBox:
         def __init__(self, *args, **kwargs): pass
         def setChecked(self, v): pass
@@ -249,6 +252,9 @@ class TestUI(unittest.TestCase):
         # Per-group profanity flags — all on by default
         self.assertTrue(config_plugin.prefs.defaults['replace_slurs'])
         self.assertTrue(config_plugin.prefs.defaults['replace_crude'])
+        for key in ('replace_strong', 'replace_sexual', 'replace_insults',
+                    'replace_mild_crude', 'replace_british'):
+            self.assertIsNone(config_plugin.prefs.defaults[key])
         self.assertTrue(config_plugin.prefs.defaults['replace_damn'])
         self.assertTrue(config_plugin.prefs.defaults['replace_bitch'])
         self.assertTrue(config_plugin.prefs.defaults['replace_shit'])
@@ -273,11 +279,14 @@ class TestUI(unittest.TestCase):
 
         # Wire up all the per-group boolean checkboxes
         widget.slurs = MagicMock(); widget.slurs.isChecked.return_value = True
-        widget.crude = MagicMock(); widget.crude.isChecked.return_value = True
+        widget.strong = MagicMock(); widget.strong.isChecked.return_value = True
+        widget.sexual = MagicMock(); widget.sexual.isChecked.return_value = True
+        widget.insults = MagicMock(); widget.insults.isChecked.return_value = True
+        widget.mild_crude = MagicMock(); widget.mild_crude.isChecked.return_value = True
+        widget.british = MagicMock(); widget.british.isChecked.return_value = True
         widget.damn  = MagicMock(); widget.damn.isChecked.return_value  = False
         widget.bitch = MagicMock(); widget.bitch.isChecked.return_value = True
         widget.shit  = MagicMock(); widget.shit.isChecked.return_value  = True
-        widget.fbomb = MagicMock(); widget.fbomb.isChecked.return_value = False
         widget.hell  = MagicMock(); widget.hell.isChecked.return_value  = True
         widget.religious = MagicMock(); widget.religious.isChecked.return_value = True
         widget.replace_god = MagicMock(); widget.replace_god.isChecked.return_value = True
@@ -324,10 +333,15 @@ class TestUI(unittest.TestCase):
 
             mock_prefs.set.assert_any_call('replace_slurs',    True)
             mock_prefs.set.assert_any_call('replace_crude',    True)
+            mock_prefs.set.assert_any_call('replace_strong', True)
+            mock_prefs.set.assert_any_call('replace_sexual', True)
+            mock_prefs.set.assert_any_call('replace_insults', True)
+            mock_prefs.set.assert_any_call('replace_mild_crude', True)
+            mock_prefs.set.assert_any_call('replace_british', True)
             mock_prefs.set.assert_any_call('replace_damn',     False)
             mock_prefs.set.assert_any_call('replace_bitch',    True)
             mock_prefs.set.assert_any_call('replace_shit',     True)
-            mock_prefs.set.assert_any_call('replace_fbomb',    False)
+            mock_prefs.set.assert_any_call('replace_fbomb',    True)
             mock_prefs.set.assert_any_call('replace_hell',     True)
             mock_prefs.set.assert_any_call('replace_religious', True)
             mock_prefs.set.assert_any_call('replace_god',       True)
@@ -792,10 +806,13 @@ class TestUI(unittest.TestCase):
         for r in shit_list:
             self.assertNotIn(r, rules)
 
-        # Disable fbomb only
-        rules = language_check('normal text', replace_fbomb=False)
-        for r in fbomb_list:
+        # Strong profanity toggles the C-word and F-word families together.
+        rules = language_check('normal text', replace_crude=False, replace_strong=False)
+        for r in c.strong_profanity_list + fbomb_list:
             self.assertNotIn(r, rules)
+        rules = language_check('normal text', replace_crude=False, replace_strong=True)
+        for r in c.strong_profanity_list + fbomb_list:
+            self.assertIn(r, rules)
 
         # Disable hell only
         rules = language_check('normal text', replace_hell=False)
@@ -827,7 +844,7 @@ class TestUI(unittest.TestCase):
             'normal text',
             replace_slurs=False, replace_crude=False,
             replace_damn=False, replace_bitch=False, replace_shit=False,
-            replace_fbomb=False, replace_hell=False, replace_religious=False,
+            replace_strong=False, replace_hell=False, replace_religious=False,
             replace_ass=False,
         )
         self.assertEqual(rules, [])
@@ -908,6 +925,9 @@ class TestUI(unittest.TestCase):
         act = action.CleanerAction(gui, 'test')
         mock_defaults = {
             'replace_slurs': True, 'replace_crude': True,
+            'replace_strong': None, 'replace_sexual': None,
+            'replace_insults': None, 'replace_mild_crude': None,
+            'replace_british': None,
             'replace_damn': True,  'replace_bitch': True,
             'replace_shit': True,  'replace_fbomb': True,
             'replace_hell': True,  'replace_religious': True,
@@ -924,7 +944,9 @@ class TestUI(unittest.TestCase):
             snap = act._snapshot_prefs()
 
         expected_keys = [
-            'replace_slurs', 'replace_crude', 'replace_damn', 'replace_bitch',
+            'replace_slurs', 'replace_crude', 'replace_strong', 'replace_sexual',
+            'replace_insults', 'replace_mild_crude', 'replace_british',
+            'replace_damn', 'replace_bitch',
             'replace_shit', 'replace_fbomb', 'replace_hell', 'replace_religious',
             'replace_vain_lord', 'ass_mode', 'replace_ass', 'replace_god',
             'mute_setup_warning',

@@ -66,12 +66,12 @@ Open the config dialog via the button's dropdown menu → **Configure…**, or *
 - **Replace d\*\*\* variants** — d\*mn and all its variants.
 - **Replace b\*\*\*\* variants** — b\*tch and all its variants.
 - **Replace s\*\*\* variants** — sh\*t and all its variants.
-- **Replace f\*\*\* variants** — the f-bomb and all its variants.
+- **Replace strong profanity (C-word, cocksucker, F-word family)** — One setting controls these severe profanity rules together.
 - **Replace h\*\*\* variants** — h\*ll and all its variants.
 
 ### Donkey language
 The word "\*ss" has two very different meanings. You can choose whether to replace it at all, and how to handle the ambiguous standalone case:
-- **Replace \*ss / \*rse (standalone and compound words)** — Global replacement setting. Compound words (sm\*rt-\*ss, j\*ck\*ss, k\*ss-\*ss, etc.) are always replaced regardless of the mode setting.
+- **Replace standalone \*ss / \*rse and donkey-related compounds** — Global replacement setting. Compound words (sm\*rt-\*ass, j\*ck-\*ass, k\*ss-\*ass, etc.) are replaced regardless of the standalone mode. *Asshole* is controlled by **Crude insults**.
 - **Standalone "\*ss" / "\*rse" means:** choose
   - **auto-detect**: this is default, try to guess mode based on book content
   - **insult** (Tom Clancy style): assume the word is used as an insult
@@ -86,11 +86,15 @@ The word "\*ss" has two very different meanings. You can choose whether to repla
 - **Replace ALL occurrences of "God" and "Christ"** — Warning: this is turns off contextual smarts and just replaces every occurance  — catches narration, theology, character names, etc. Off by default.
 
 ### Crude language
-- **Replace crude language** — Body-part references, bathroom humour, and crude compound words (cr\*p, d\*ck, b\*stard, etc.)
-- Unambiguous insults (including c\*nt, c\*cksucker, d\*ckhead, and a\*sshole) are softened to “jerk”; sl\*t is softened to “trollop.” Like other crude-language replacements, they follow **Replace crude language** and are not decided by ass or religious auto-detection.
+- **Sexual / anatomical language** — Context-guarded references such as tits and dick, plus topless bars and whorehouses. Broad matches for cock, pussy, cum, and prick are omitted where they risk changing ordinary text.
+- **Crude insults** — d\*ckhead, d\*ckweed, a\*sshole, asswipe, jackoff, and sl\*t (softened to “trollop”).
+- **Mild bodily / bathroom language** — crap and crapper variants, plus selected piss phrases such as *piss off*, *pissed off*, and *piss-poor*.
+- **British & Irish slang (guarded idioms)** — Selected uses of twat, wanker, tosser, bollocks/ballocks, bugger, fecking, scutter, cock-up, arse, and bloody as an intensifier. These terms have regional usage and are not all Britain-exclusive. Prick is omitted because it is also an ordinary verb. Literal blood references are left alone where practical.
+
+These categories are independently selectable. Existing installations inherit their previous **Replace crude language** setting for each new category until the configuration is saved.
 
 ### Slurs
-- **Replace racial / ethnic slurs** — Common offensive slurs; on by default.
+- **Replace racial / ethnic slurs** — Common slurs become generic person/people terms where they refer to people; slur compounds keep their main noun where practical. Ordinary references to Jewish people and animal uses of *coon* are preserved.
 
 If you want a pretty thorough list of the changes the plugin will make, you could look at [test_cleaner.py](test_cleaner.py) — it is a test suite of changes that should be made.
 

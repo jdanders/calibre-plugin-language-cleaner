@@ -217,7 +217,7 @@ class CleanerPlugin(InterfaceActionBase):
     description = 'Toolbar button to clean language in selected books'
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'
-    version = (2026, 5, 12)
+    version = (2026, 11, 20)
     minimum_calibre_version = (5, 0, 0)
     actual_plugin = 'calibre_plugins.language_clean_plugin.action:CleanerAction'
 
@@ -261,21 +261,30 @@ def _build_replacement_list(full_text, _p, log_fn):
     """
     vain_raw = _p.get('replace_vain_lord', 'auto')
     ass_raw = _p.get('ass_mode', 'auto')
+    legacy_crude = _p.get('replace_crude', True)
+
+    def crude_group(name):
+        value = _p.get(name)
+        return legacy_crude if value is None else value
 
     replacement_list = language_check(
         full_text,
         vain_override=_VAIN_MAP.get(vain_raw, vain_raw),
         ass_override=_ASS_MAP.get(ass_raw, ass_raw),
         replace_slurs=_p.get('replace_slurs', True),
-        replace_crude=_p.get('replace_crude', True),
+        replace_crude=legacy_crude,
         replace_damn=_p.get('replace_damn', True),
         replace_bitch=_p.get('replace_bitch', True),
         replace_shit=_p.get('replace_shit', True),
-        replace_fbomb=_p.get('replace_fbomb', True),
         replace_hell=_p.get('replace_hell', True),
         replace_religious=_p.get('replace_religious', True),
         replace_ass=_p.get('replace_ass', True),
         replace_god=_p.get('replace_god', False),
+        replace_strong=crude_group('replace_strong'),
+        replace_sexual=crude_group('replace_sexual'),
+        replace_insults=crude_group('replace_insults'),
+        replace_mild_crude=crude_group('replace_mild_crude'),
+        replace_british=crude_group('replace_british'),
     )
 
     for entry in _p.get('custom_replacements', []):
