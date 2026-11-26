@@ -160,24 +160,31 @@ class TestInitExtended(unittest.TestCase):
         log_fn = MagicMock()
         rlist = _build_replacement_list("some text", _p, log_fn)
         
-        # Check if custom replacements are in the list
-        # They should be at the end
-        custom_entries = rlist[-2:] # skip the invalid ones
+        # Valid custom replacements should precede built-ins.
         
         # foo -> bar
-        pat1, repl1, case_fn1 = rlist[-2]
+        pat1, repl1, case_fn1 = rlist[0]
         self.assertTrue(pat1.match('FOO'))
         self.assertEqual(repl1, 'bar')
         self.assertNotEqual(case_fn1, False)
 
         # b(a)z -> qux\1
-        pat2, repl2, case_fn2 = rlist[-1]
+        pat2, repl2, case_fn2 = rlist[1]
         self.assertTrue(pat2.match('baz'))
         self.assertFalse(pat2.match('BAZ'))
         self.assertEqual(repl2, 'qux\\1')
         self.assertFalse(case_fn2)
 
         log_fn.assert_called() # Should be called for 'invalid ['
+
+    def test_custom_replacement_overrides_builtin(self):
+        rules = _build_replacement_list(
+            'shit',
+            {'replace_shit': True,
+             'custom_replacements': [['shit', 'custom', True, False]]},
+            MagicMock(),
+        )
+        self.assertEqual(cleaner.RuleEngine(rules).process_line('shit'), 'custom')
 
     @patch('calibre_plugins.language_clean_plugin._write_logs')
     @patch('calibre_plugins.language_clean_plugin._get_logdir')

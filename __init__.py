@@ -287,6 +287,7 @@ def _build_replacement_list(full_text, _p, log_fn):
         replace_british=crude_group('replace_british'),
     )
 
+    custom_replacements = []
     for entry in _p.get('custom_replacements', []):
         if len(entry) < 2:
             log_fn('Custom replacement skipped — entry too short: %s' % str(entry))
@@ -301,11 +302,12 @@ def _build_replacement_list(full_text, _p, log_fn):
             # Regex replacements: literal sub() so backreferences (\1) expand.
             # Literal replacements: keep_case to preserve capitalisation.
             pcase_fn = False if is_regex else keep_case
-            replacement_list.append((pat, replace, pcase_fn))
+            custom_replacements.append((pat, replace, pcase_fn))
         except Exception as e:
             log_fn('Custom replacement "%s" skipped — invalid regex: %s' % (find, e))
 
-    return replacement_list
+    # Manual rules take precedence over built-ins when they target the same text.
+    return custom_replacements + replacement_list
 
 
 # Strip HTML tags and decode common entities for visible-text comparison.
