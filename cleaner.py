@@ -39,6 +39,36 @@ def first_case(sub, matchobj, group=0):
     return sub
 
 
+def replace_as_shit(sub, matchobj):
+    """Replace an 'as shit' intensifier while normalizing adjective case."""
+    adjective = matchobj.group(1)
+    if adjective.isupper():
+        return ('very ' + adjective).upper()
+    if adjective[:1].isupper():
+        return 'Very ' + adjective.lower()
+    return 'very ' + adjective
+
+
+def replace_pissed_object(sub, matchobj):
+    """Turn 'pissed someone off' into 'angered someone', keeping sentence case."""
+    return first_case('angered ' + matchobj.group(1), matchobj)
+
+
+def replace_fuck_over(sub, matchobj):
+    """Turn 'fuck someone over' into 'cheat someone', keeping sentence case."""
+    return first_case('cheat ' + matchobj.group(1), matchobj)
+
+
+def replace_hell_response(matchobj):
+    """Keep the emphasis of affirmative/negative 'hell' responses cleanly."""
+    prefix = matchobj.group(1) or ''
+    response = matchobj.group(2)
+    if prefix:
+        prefix = 'Oh, '
+    replacement = prefix + ('absolutely not' if response.lower() == 'no' else 'absolutely')
+    return first_case(replacement, matchobj)
+
+
 def remove_bloody_intensifier(matchobj):
     """Remove standalone intensifier 'bloody', preserving clear blood uses."""
     next_word = matchobj.group('next_word')
@@ -219,9 +249,18 @@ slur_list = [
     (re.compile(r'\bsheeny\b', re.I), 'man', keep_case),
 ]
 
-# Strong profanity. Person-directed uses get an insult replacement; any other
-# standalone use is still replaced with the standard anatomical term.
+# Strong profanity. Anatomical uses get a body-part replacement; other uses
+# default to the common person-directed insult.
 strong_profanity_list = [
+    # Explicit body-part constructions.
+    (re.compile(r'(\b(?:kicked|kick|punch(?:ed)?|hit|struck|stabbed)\s+(?:(?:in|to|at|between)\s+)?(?:the|her|his|their|my|your)\s+)cunt\b', re.I), r'\1crotch', False),
+    (re.compile(r"(\b\w+['’]s\s+)cunt\b", re.I), r'\1crotch', False),
+    (re.compile(r'\b(her|his|their|my|your|our)\s+cunts\b', re.I), r'\1 crotches', False),
+    (re.compile(r'\b(her|his|their|my|your|our)\s+cunt\b', re.I), r'\1 crotch', False),
+    (re.compile(r"\b(the\s+[\w'-]+(?:\s+[\w'-]+)?)\s+cunt\b", re.I), r'\1 crotch', False),
+    (re.compile(r'\bcunt(?=\s+of\b)', re.I), 'crotch', keep_case),
+    # A determiner-led human reference is an insult, not an anatomical use.
+    (re.compile(r'\b(some|that|this|another|any|one)\s+cunt\b', re.I), r'\1 jerk', False),
     (re.compile(r'\b(you|he|she|they|that)(\s+(?:are|is|was|were))?\s+(a\s+)?((?:absolute|miserable|stupid|horrible|complete)\s+)cunt\b', re.I), r'\1\2 \3\4jerk', False),
     (re.compile(r'\b(you|he|she|they|that)(\s+(?:are|is|was|were))?\s+(a\s+)?(?:(?:absolute|miserable|stupid|horrible|complete)\s+)?cunt\b', re.I), r'\1\2 \3jerk', False),
     (re.compile(r'\b(what\s+a\s+)((?:absolute|miserable|stupid|horrible|complete)\s+)?cunt\b', re.I), r'\1\2jerk', False),
@@ -231,9 +270,9 @@ strong_profanity_list = [
     (re.compile(r'\bwhat\s+a\s+bunch\s+of\s+cunts\b', re.I), 'what a bunch of jerks', keep_case),
     (re.compile(r'(^|[,!?]\s*)cunt\b(?=[,.!?])', re.I), r'\1jerk', False),
     (re.compile(r'\bcunty\b', re.I), 'obnoxious', keep_case),
-    # No standalone use is exempt: replace anatomical and metaphorical uses too.
-    (re.compile(r'\bcunts\b', re.I), 'crotches', keep_case),
-    (re.compile(r'\bcunt\b', re.I), 'crotch', keep_case),
+    # Default to an insult when the surrounding words do not indicate anatomy.
+    (re.compile(r'\bcunts\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bcunt\b', re.I), 'jerk', keep_case),
     (re.compile(r'\bcocksucker\b', re.I), 'jerk', keep_case),
     (re.compile(r'\bcocksuckers\b', re.I), 'jerks', keep_case),
 ]
@@ -277,11 +316,20 @@ mild_crude_list = [
     (re.compile(r'\bpissed on\b', re.I), 'urinated on', keep_case),
     (re.compile(r'\bpissed against\b', re.I), 'urinated against', keep_case),
     (re.compile(r'\bpissed quick short at\b', re.I), 'urinated quickly at', keep_case),
+    # Reserve "drunk" for unambiguous intoxication idioms; otherwise default
+    # to the common angry meaning of "pissed".
+    (re.compile(r'\bpissed\s+drunk\b', re.I), 'drunk', keep_case),
+    (re.compile(r'\bpissed\s+as\s+(?:a\s+)?(?:newt|fart)\b', re.I), 'drunk', keep_case),
+    (re.compile(r'\bpissed\s+out\s+of\s+(his|her|their|my|your)\s+mind\b', re.I), r'drunk out of \1 mind', False),
+    (re.compile(r'\bpissed(?=\s+(?:about|at|with|over)\b)', re.I), 'angry', keep_case),
     (re.compile(r'\b(I|you|he|she|it|we|they)([’\'](?:m|s|re)|\s+(?:am|are|is|was|were))\s+pissed\s+off\b', re.I), r'\1\2 angry', False),
+    (re.compile(r'\bpissed\s+(me|him|her|them|you|us)\s+off\b', re.I), '', replace_pissed_object),
     (re.compile(r'\bpissed off\b(?=\s+(?:his|her|their|my|our|your)\b)', re.I), 'annoyed', keep_case),
+    (re.compile(r'\ba(?=\s+pissed[- ]off\b)', re.I), 'an', keep_case),
+    (re.compile(r'\bpissed[- ]off\b', re.I), 'angry', keep_case),
     (re.compile(r'\bpiss\s+off(?=[,!.?]|$)', re.I), 'go away', keep_case),
     (re.compile(r'\bpissing\b', re.I), 'urinating', keep_case),
-    (re.compile(r'\bpissed\b', re.I), 'drunk', keep_case),
+    (re.compile(r'\bpissed\b', re.I), 'angry', keep_case),
     (re.compile(r'\bpiss\b', re.I), 'urine', keep_case),
 ]
 
@@ -402,8 +450,8 @@ crude_list = (strong_profanity_list + sexual_anatomical_list + crude_insult_list
 # "Damn" and all its variants
 damn_list = [
     # Replace goddammit and dammit with 'dang it'
+    (re.compile(r'\b(?:god)?dam(?:m|n)it\b', re.I), 'dang it', keep_case),
     (re.compile(r'([^\.?!] *) Goddam([mn])', re.I), r'\1 goddam\2', False),
-    (re.compile(r'(?:gods?)?dammit', re.I), 'dang it', keep_case),
     #########################################
     # Replace damn and its varieties
     #########################################
@@ -484,6 +532,12 @@ shit_list = [
     #########################################
     # Convert shite to shit so later specific rules catch it
     (re.compile(r'\bshite\b', re.I), 'shit', keep_case),
+    # Phrase meanings take precedence over the generic noun replacement.
+    (re.compile(r'\b(a|the)\s+shit[- ]?load\s+of\b', re.I), r'\1 lot of', False),
+    (re.compile(r'\b(shitty)\s+pour\b', re.I), 'bad pour', keep_case),
+    (re.compile(r'\b(typing|writing|talking|saying)\s+shit\b', re.I), r'\1 nonsense', False),
+    (re.compile(r'\b(give|gives|gave|giving)\s+(me|him|her|them|you|someone)\s+shit\b', re.I), r'\1 \2 a hard time', False),
+    (re.compile(r'\b([\w-]+)\s+as\s+shit\b', re.I), 'very', replace_as_shit),
     (re.compile(r'\bdipshits\b', re.I), 'idiots', keep_case),
     (re.compile(r'\bdipshit\b', re.I), 'idiot', keep_case),
     (re.compile(r'\bshitfaced\b', re.I), 'drunk', keep_case),
@@ -491,6 +545,7 @@ shit_list = [
     (re.compile(r'\b(?:apeshit|batshit)\b', re.I), 'wild', keep_case),
     (re.compile(r'\b(he|she|it)\s+shits\b', re.I), r'\1 defecates', False),
     (re.compile(r'\b(they|we|you)\s+shit\b', re.I), r'\1 defecate', False),
+    (re.compile(r'\bshitting\b', re.I), 'pooping', keep_case),
     # bullshit
     (re.compile(r'\b(bull|horse|dog|jack)(.)?shit', re.I), 'shit', keep_case),
     # Holy shit
@@ -529,22 +584,38 @@ shit_list = [
 # The f-bomb and all its variants
 fbomb_list = [
     #########################################
-    # f-bomb
+    # Replace every spelling with a safe placeholder before interpreting it.
+    # Later rules should only need to handle zxsa, never the original word.
     #########################################
-    # Handle common compounds before the general f-word substitutions.
-    (re.compile(r'\bfuckwits\b', re.I), 'idiots', keep_case),
-    (re.compile(r'\bfuckwit\b', re.I), 'idiot', keep_case),
-    (re.compile(r'\bfuckfaces\b', re.I), 'jerks', keep_case),
-    (re.compile(r'\bfuckface\b', re.I), 'jerk', keep_case),
-    (re.compile(r'\bfuckheads\b', re.I), 'idiots', keep_case),
-    (re.compile(r'\bfuckhead\b', re.I), 'idiot', keep_case),
-    (re.compile(r'\bfuckboys\b', re.I), 'jerks', keep_case),
-    (re.compile(r'\bfuckboy\b', re.I), 'jerk', keep_case),
-    (re.compile(r'\bun-?fucking-?(?=believable)', re.I), 'un', keep_case),
-    # clean up script...
+    # Keep these normalizers first so source spellings do not appear in later
+    # phrase rules or replacement logic.
     (re.compile(r'(m[OoUu]th[AaEe]r?[ -]?)?fuck', re.I), 'zxsa', keep_case),
-    # clean up script...
     (re.compile(r'(m[OoUu]th[AaEe]r?[ -]?)?fook', re.I), 'zxsa', keep_case),
+    # Preserve the idiomatic meaning after sanitizing the source word.
+    (re.compile(r'\bfor\s+zxsa(?:[’\']s|s)?\s+sake\b', re.I), 'for goodness’ sake', keep_case),
+    (re.compile(r'\bzxsa[-\s]+off\b', re.I), 'go away', keep_case),
+    # Common compounds, now expressed only in terms of the placeholder.
+    (re.compile(r'\bzxsawits\b', re.I), 'idiots', keep_case),
+    (re.compile(r'\bzxsawit\b', re.I), 'idiot', keep_case),
+    (re.compile(r'\bzxsafaces\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bzxsaface\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\bzxsaheads\b', re.I), 'idiots', keep_case),
+    (re.compile(r'\bzxsahead\b', re.I), 'idiot', keep_case),
+    (re.compile(r'\bzxsaboys\b', re.I), 'jerks', keep_case),
+    (re.compile(r'\bzxsaboy\b', re.I), 'jerk', keep_case),
+    (re.compile(r'\bun-?zxsaing-?(?=believable)', re.I), 'un', keep_case),
+    # Common idioms need a phrase replacement before the catch-all placeholder.
+    (re.compile(r'\boh[,!]?[ \t]+zxsa\s+this\b', re.I), 'oh, forget this', keep_case),
+    (re.compile(r'\b(yeah[,!]?[ \t]+)zxsa\s+(this|that)\b', re.I), r'\1forget \2', False),
+    (re.compile(r'\b(oh[,!]?[ \t]*)zxsa\b', re.I), r'\1shoot', False),
+    (re.compile(r'\bzxsa([,;:])(?=\s+(?:man|dude|girl|guys|everyone)\b)', re.I), r'Shoot\1', False),
+    (re.compile(r'\b(holy)\s+zxsa\b', re.I), 'unbelievable', keep_case),
+    (re.compile(r'\b((?:I|we|you|they|he|she|it)(?:[’\']d| would| could| should| might)\s+be)\s+zxsaed\b', re.I), r'\1 in trouble', False),
+    (re.compile(r'\b(I|we|you|they|he|she|it)\s+(just\s+)?got\s+zxsaed\b', re.I), r'\1 \2got screwed', False),
+    (re.compile(r'\ba\s+bigger\s+zxsa\s+you\s+to\b', re.I), 'a bigger insult to', keep_case),
+    (re.compile(r'\ba\s+zxsa\s+you\s+to\b', re.I), 'an insult to', keep_case),
+    (re.compile(r'\bzxsa\s+(me|you|him|her|them|us)\s+over\b', re.I), '', replace_fuck_over),
+    (re.compile(r'\bzxsa\s+themselves\b', re.I), 'get lost', keep_case),
     # f yourself
     (re.compile(r'zxsa[\W]?yourself', re.I), "kill yourself", first_case),
     # cluster f
@@ -636,8 +707,11 @@ hell_list = [
     # what/how/whatever/etc the hell
     (re.compile(r'(?i)\b(how|for|where|what|whatever|who|why|when)(\Wthe\W)(?:[a-z]+\W+)?(hell)\b'),
                 lambda m: m.group(1) + m.group(2) + keep_case('heck', m, group=3), False),
-    # Interjection uses, including the older "O hell!" form.
-    (re.compile(r'\b(?:O|Oh)\W+hell(?=[,!.?]|$)', re.I), 'Oh heck', keep_case),
+    # Hell yeah/no are complete response phrases, often with an Oh prefix.
+    (re.compile(r'\b(oh[,!]?[ \t]+)?hell\s+(yeah?|yes|no)\b', re.I), replace_hell_response, False),
+    # Keep the older literary "O hell!" interjection distinct from "Oh hell!".
+    (re.compile(r'\bO\W+hell(?=[,!.?]|$)', re.I), 'Oh heck', keep_case),
+    (re.compile(r'\bOh\W+hell(?=[,!.?]|$)', re.I), 'Oh no', keep_case),
     # sure/busy/etc. as hell
     (re.compile(r'(?<!known)( as) hell\b(\W*.)', re.I), '', drop_first_match),
     # helluva
@@ -741,7 +815,8 @@ class RuleEngine:
         else:
             self.keywords_re = None
 
-    def process_line(self, line):
+    def process_line(self, line, stats=None):
+        original_line = line
         # Optimization: If no keyword is present, skip all regexes.
         if self.keywords_re and not self.keywords_re.search(line):
             return line
@@ -749,19 +824,36 @@ class RuleEngine:
         # Maintain exact parity by running all rules in sequence.
         for pattern, sub, pcase in self.rules:
             if pcase:
-                line = pattern.sub(partial(pcase, sub), line)
+                line, count = pattern.subn(partial(pcase, sub), line)
             else:
-                line = pattern.sub(sub, line)
+                line, count = pattern.subn(sub, line)
+            if stats is not None:
+                stats['rule_substitutions'] += count
+        if stats is not None and line != original_line:
+            stats['lines_changed'] += 1
         return line
 
-    def process_text(self, text):
-        return "\n".join(self.process_line(line) for line in text.split("\n"))
+    def process_text(self, text, stats=None):
+        return "\n".join(self.process_line(line, stats) for line in text.split("\n"))
 
 
 def clean_text(text):
     replacement_list = language_check(text)
     engine = RuleEngine(replacement_list)
     return engine.process_text(text)
+
+
+def clean_text_with_stats(text):
+    """Clean text and return it with line-change and rule-substitution counts."""
+    stats = {
+        'lines_total': len(text.split('\n')),
+        'lines_changed': 0,
+        'rule_substitutions': 0,
+    }
+    replacement_list = language_check(text)
+    engine = RuleEngine(replacement_list)
+    cleaned = engine.process_text(text, stats)
+    return cleaned, stats
 
 
 def language_check(text, vain_override='auto', ass_override='auto',

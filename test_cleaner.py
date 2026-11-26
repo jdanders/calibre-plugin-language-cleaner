@@ -273,9 +273,9 @@ class TestCleanerRegex(unittest.TestCase):
             ("cocker spaniels", "cocker spaniels"),
             ("cocker-spaniel", "cocker-spaniel"),
             ("cocker-spaniels", "cocker-spaniels"),
-            ("cunt", "crotch"),
-            ("CUNT", "CROTCH"),
-            ("cunts", "crotches"),
+            ("cunt", "jerk"),
+            ("CUNT", "JERK"),
+            ("cunts", "jerks"),
             ("cunty", "obnoxious"),
             ("you cunt", "you jerk"),
             ("you absolute cunt", "you absolute jerk"),
@@ -284,7 +284,31 @@ class TestCleanerRegex(unittest.TestCase):
             ("you cunts", "you jerks"),
             ("you absolute cunts", "you absolute jerks"),
             ("Goddammit", "Dang it"),
+            ("Goddamnit, I grumbled", "Dang it, I grumbled"),
             ("dammit", "dang it"),
+        ])
+
+    def test_re_list_contextual_profanity_phrases(self):
+        self.check_list(re_list, [
+            ("Some cunt done buggered up the system.", "Some jerk done messed up the system."),
+            # Keep crotch replacements for clearly anatomical references.
+            ("He got kicked in the cunt.", "He got kicked in the crotch."),
+            ("He got a kick to the cunt.", "He got a kick to the crotch."),
+            ("He injured her cunt.", "He injured her crotch."),
+            ("The train was locked tighter than an octoid's cunt.", "The train was locked tighter than an octoid's crotch."),
+            ("the grey sunken cunt of the world", "the grey sunken crotch of the world"),
+            ("the grey cunt of the world", "the grey crotch of the world"),
+            ("Oh, fuck.", "Oh, shoot."),
+            ("Holy fuck.", "Unbelievable."),
+            ("Fuck, man.", "Shoot, man."),
+            ("We'd be fucked.", "We'd be in trouble."),
+            ("We just got fucked.", "We just got screwed."),
+            ("I hate this mental typing shit.", "I hate this mental typing nonsense."),
+            ("Don't give me shit.", "Don't give me a hard time."),
+            ("That was scary as shit.", "That was very scary."),
+            ("Scary as shit.", "Very scary."),
+            ("There was a shitload of monsters.", "There was a lot of monsters."),
+            ("Don't give me a shitty pour.", "Don't give me a bad pour."),
         ])
 
     def test_re_list_ass_varieties(self):
@@ -422,6 +446,7 @@ class TestCleanerRegex(unittest.TestCase):
             ("shithole", "pile of trash"),
             ("shit-hole", "pile of trash"),
             ("shittin'", "kiddin'"),
+            ("That guy will be shitting ice cubes for the next three seasons.", "That guy will be pooping ice cubes for the next three seasons."),
             ("shitter", "toilet"),
             ("shitty", "nasty"),
             (" shit-filled", ""),
@@ -437,6 +462,18 @@ class TestCleanerRegex(unittest.TestCase):
 
     def test_re_list_f_bomb(self):
         cases = [
+            ("The system tended to fuck you over.", "The system tended to cheat you."),
+            ("This is a bigger fuck you to the showrunners.", "This is a bigger insult to the showrunners."),
+            ("How is this a fuck you to the boss people?", "How is this an insult to the boss people?"),
+            ("They could all go fuck themselves.", "They could all go get lost."),
+            ("They should fuck themselves.", "They should get lost."),
+            ("For fuck's sake.", "For goodness’ sake."),
+            ("Oh, for fuck’s sake, Mordecai.", "Oh, for goodness’ sake, Mordecai."),
+            ("Oh fuck this.", "Oh, forget this."),
+            ("Oh, fuck this.", "Oh, forget this."),
+            ("Yeah, fuck this.", "Yeah, forget this."),
+            ("Yeah, fuck that.", "Yeah, forget that."),
+            ("Fuck off, Mordecai.", "Go away, Mordecai."),
             ("fuck", "idiot"), # Rule: fuck -> zxsa -> idiot
             ("motherfuck", "idiot"), # Rule: motherfuck -> zxsa -> idiot
             ("mother-fuck", "idiot"),
@@ -528,6 +565,14 @@ class TestCleanerRegex(unittest.TestCase):
             ("snowball in hell", "snowball in perdition"),
             ("Hell open to christians", "Perdition open to christians"),
             ("O hell!", "Oh heck!"),
+            ("Oh hell yeah!", "Oh, absolutely!"),
+            ("Oh, hell yeah!", "Oh, absolutely!"),
+            ("Hell yeah!", "Absolutely!"),
+            ("hell yea", "absolutely"),
+            ("Oh hell yes!", "Oh, absolutely!"),
+            ("Hell no!", "Absolutely not!"),
+            ("Oh hell no!", "Oh, absolutely not!"),
+            ("Oh hell!", "Oh no!"),
             ("God thrust Satan down to hell.", "God thrust Satan down to perdition."),
             ("to hell", "to perdition"),
             ("some hell", "some trouble"),
@@ -627,6 +672,16 @@ class TestCleanerRegex(unittest.TestCase):
         self.assertEqual(clean_text('fuckboy'), 'jerk')
         self.assertEqual(clean_text('unfuckingbelievable'), 'unbelievable')
 
+    def test_clean_text_with_stats(self):
+        from cleaner import clean_text_with_stats
+        cleaned, stats = clean_text_with_stats('fuck\nplain')
+        self.assertEqual(cleaned, 'idiot\nplain')
+        self.assertEqual(stats, {
+            'lines_total': 2,
+            'lines_changed': 1,
+            'rule_substitutions': 2,
+        })
+
     def test_reviewed_inflections_and_compounds(self):
         from cleaner import clean_text
         cases = [
@@ -723,6 +778,15 @@ class TestCleanerRegex(unittest.TestCase):
         mild = RuleEngine(mild_crude_list)
         self.assertEqual(mild.process_line('Take a piss.'), 'Use the toilet.')
         self.assertEqual(mild.process_line("I'm pissed off."), "I'm angry.")
+        self.assertEqual(mild.process_line("She's mighty pissed about it, too."), "She's mighty angry about it, too.")
+        self.assertEqual(mild.process_line("I'm pissed at him."), "I'm angry at him.")
+        self.assertEqual(mild.process_line("Pissed me off further."), "Angered me further.")
+        self.assertEqual(mild.process_line("filled with pissed-off narwhals"), "filled with angry narwhals")
+        self.assertEqual(mild.process_line("a pissed off crowd"), "an angry crowd")
+        self.assertEqual(mild.process_line("She was pissed."), "She was angry.")
+        self.assertEqual(mild.process_line("He got pissed drunk."), "He got drunk.")
+        self.assertEqual(mild.process_line("He was pissed as a newt."), "He was drunk.")
+        self.assertEqual(mild.process_line("He was pissed out of his mind."), "He was drunk out of his mind.")
         self.assertEqual(mild.process_line('Piss off!'), 'Go away!')
         self.assertEqual(mild.process_line('He pissed off his friend.'), 'He annoyed his friend.')
         self.assertEqual(mild.process_line('horsepiss'), 'horse urine')
