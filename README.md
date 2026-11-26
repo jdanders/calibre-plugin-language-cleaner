@@ -66,7 +66,7 @@ Open the config dialog via the button's dropdown menu → **Configure…**, or *
 - **Replace d\*\*\* variants** — d\*mn and all its variants.
 - **Replace b\*\*\*\* variants** — b\*tch and all its variants.
 - **Replace s\*\*\* variants** — sh\*t and all its variants.
-- **Replace strong profanity (C-word, cocksucker, F-word family)** — One setting controls these severe profanity rules together.
+- **Replace strong profanity (C-word, F-word family)** — One setting controls these severe profanity rules together.
 - **Replace h\*\*\* variants** — h\*ll and all its variants.
 
 ### Donkey language
@@ -89,7 +89,7 @@ The word "\*ss" has two very different meanings. You can choose whether to repla
 - **Sexual / anatomical language** — Context-guarded references such as tits and dick, plus topless bars and whorehouses. Broad matches for cock, pussy, cum, and prick are omitted where they risk changing ordinary text.
 - **Crude insults** — d\*ckhead, d\*ckweed, a\*sshole, asswipe, jackoff, and sl\*t (softened to “trollop”).
 - **Mild bodily / bathroom language** — crap and crapper variants, plus selected piss phrases such as *piss off*, *pissed off*, and *piss-poor*.
-- **British & Irish slang (guarded idioms)** — Selected uses of twat, wanker, tosser, bollocks/ballocks, bugger, fecking, scutter, cock-up, arse, and bloody as an intensifier. These terms have regional usage and are not all Britain-exclusive. Prick is omitted because it is also an ordinary verb. Literal blood references are left alone where practical.
+- **British & Irish slang** — Selected uses of twat, wanker, tosser, bollocks/ballocks, bugger, fecking, scutter, cock-up, arse, and bloody as an intensifier. These terms have regional usage and are not all Britain-exclusive. Prick is omitted because it is also an ordinary verb. Literal blood references are left alone where practical.
 
 These categories are independently selectable. Existing installations inherit their previous **Replace crude language** setting for each new category until the configuration is saved.
 

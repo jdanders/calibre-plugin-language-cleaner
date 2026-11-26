@@ -217,7 +217,7 @@ class CleanerPlugin(InterfaceActionBase):
     description = 'Toolbar button to clean language in selected books'
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Jordan Anderson'
-    version = (2026, 11, 20)
+    version = (2026, 11, 26)
     minimum_calibre_version = (5, 0, 0)
     actual_plugin = 'calibre_plugins.language_clean_plugin.action:CleanerAction'
 

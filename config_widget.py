@@ -33,7 +33,7 @@ class ConfigWidget(QWidget):
         strong_pref = prefs.get('replace_strong')
         if strong_pref is None:
             strong_pref = prefs.get('replace_crude', True)
-        self.strong = QCheckBox('Replace strong profanity (c***, cocksucker, f***)')
+        self.strong = QCheckBox('Replace strong profanity (c***, f***)')
         self.strong.setChecked(strong_pref)
         profanity_layout.addWidget(self.strong)
 
@@ -160,7 +160,7 @@ class ConfigWidget(QWidget):
         self.sexual = QCheckBox('Sexual / anatomical language')
         self.insults = QCheckBox('Crude insults')
         self.mild_crude = QCheckBox('Mild bodily / bathroom language')
-        self.british = QCheckBox('British & Irish slang (guarded idioms)')
+        self.british = QCheckBox('British & Irish slang')
         self.sexual.setChecked(group_enabled('replace_sexual'))
         self.insults.setChecked(group_enabled('replace_insults'))
         self.mild_crude.setChecked(group_enabled('replace_mild_crude'))
